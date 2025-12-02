@@ -52,6 +52,8 @@ data/starr/
 
 # Keep example/test data
 !data/synthetic/example_*.json
+!data/synthetic/test_*.json
+!data/synthetic/mixed_*.json
 
 # Environment variables
 .env
