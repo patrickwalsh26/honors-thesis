@@ -1,6 +1,6 @@
 # Privacy-Preserving Phenotype Matching for Rare Disease Cohorts
 
-**Stanford CS Honors Thesis 2024-2025**
+**Stanford CS Honors Thesis 2025-2026**
 **Author:** Patrick Walsh
 **Advisor:** Professor Stephen Montgomery
 
@@ -109,7 +109,7 @@ matches = matcher.find_matches(query_phenopacket, database_phenopackets)
 
 ## Development Timeline
 
-### Fall Quarter 2024
+### Fall Quarter 2025
 - [x] Project repository setup
 - [ ] Synthetic Phenopacket generator
 - [ ] Baseline similarity metrics (Resnik IC)
@@ -129,7 +129,7 @@ matches = matcher.find_matches(query_phenopacket, database_phenopackets)
 
 ## Data Sources
 
-### Current (Fall 2024)
+### Current (Fall 2025)
 - **Synthetic Data**: Generated from HPO term prevalence statistics
 - **HPO Ontology**: Public Human Phenotype Ontology
 - **Published Prevalence**: Aggregated statistics from literature
