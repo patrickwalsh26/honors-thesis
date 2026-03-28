@@ -1,0 +1,91 @@
+# Configuration file for privacy-phenotype-matching
+
+# Data paths
+data:
+  hpo_ontology_url: "https://purl.obolibrary.org/obo/hp.obo"
+  hpo_annotations_url: "http://purl.obolibrary.org/obo/hp/hpoa/phenotype.hpoa"
+  hpo_local_path: "data/hpo_ontology/hp.obo"
+  annotations_local_path: "data/hpo_ontology/phenotype.hpoa"
+  synthetic_output: "data/synthetic/"
+  term_prevalence: "data/term_prevalence/"
+
+# Synthetic data generation
+synthetic:
+  default_cohort_size: 100
+  rare_disease_phenotypes:
+    - name: "Ehlers-Danlos Syndrome"
+      disease_id: "OMIM:130000"
+      core_terms: ["HP:0000974", "HP:0001382", "HP:0002616"]  # Skin hyperextensibility, Joint hypermobility, Aortic root aneurysm
+      prevalence: 0.0001
+
+    - name: "Marfan Syndrome"
+      disease_id: "OMIM:154700"
+      core_terms: ["HP:0001519", "HP:0001166", "HP:0002616"]  # Arachnodactyly, Long fingers, Aortic root aneurysm
+      prevalence: 0.0002
+
+    - name: "Achondroplasia"
+      disease_id: "OMIM:100800"
+      core_terms: ["HP:0003498", "HP:0002007", "HP:0000256"]  # Disproportionate short stature, Frontal bossing, Macrocephaly
+      prevalence: 0.00004
+
+  # Phenopacket generation parameters
+  min_terms_per_patient: 3
+  max_terms_per_patient: 15
+  noise_probability: 0.1  # Probability of adding noise terms
+  negation_probability: 0.05  # Probability of negating a term
+
+# Similarity metrics
+similarity:
+  method: "resnik"  # Options: resnik, lin, jc, embeddings
+  use_ic_weighting: true
+  ic_source: "phenotype_annotation"  # How to compute information content
+
+# Privacy parameters
+privacy:
+  # Private Set Intersection
+  psi:
+    enabled: true
+    security_parameter: 128  # Bit security level
+
+  # Differential Privacy
+  differential_privacy:
+    enabled: true
+    epsilon: 1.0  # Privacy budget
+    delta: 1e-5
+    mechanism: "laplace"  # Options: laplace, gaussian
+
+  # k-anonymity
+  k_anonymity:
+    enabled: true
+    k: 5  # Minimum cohort size to return results
+
+  # Rare term suppression
+  rare_term_filter:
+    enabled: true
+    min_prevalence: 0.001  # Suppress terms rarer than this
+
+  # Privacy-utility experiments
+  epsilon_range: [0.1, 0.5, 1.0, 2.0, 5.0]
+  k_range: [3, 5, 10, 20]
+
+# Evaluation
+evaluation:
+  metrics:
+    - "recall@k"
+    - "ndcg@k"
+    - "precision@k"
+    - "f1@k"
+  k_values: [1, 5, 10, 20]
+
+  # Leakage audit parameters
+  leakage_audit:
+    membership_inference: true
+    attribute_inference: true
+    n_shadow_models: 5
+    attack_iterations: 100
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "logs/experiment.log"
+  console: true
