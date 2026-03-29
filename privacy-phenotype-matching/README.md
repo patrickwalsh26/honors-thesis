@@ -1,6 +1,6 @@
 # Privacy-Preserving Phenotype Matching for Rare Disease Cohorts
 
-**Stanford CS Honors Thesis 2024-2025**
+**Stanford CS Honors Thesis 2025-2026**
 **Author:** Patrick Walsh
 **Advisor:** Professor Stephen Montgomery
 
