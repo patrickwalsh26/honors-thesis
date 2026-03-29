@@ -82,3 +82,10 @@ figures/
 *.pdf
 !docs/*.pdf
 !reports/*.pdf
+
+# Personal documents
+Transcript.pdf
+SUBMISSION_GUIDE.md
+Letter of Endorsement.pdf
+CS CompBio 24-25.pdf
+Application Letter.pdf
