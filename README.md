@@ -116,13 +116,13 @@ matches = matcher.find_matches(query_phenopacket, database_phenopackets)
 - [ ] PSI prototype implementation
 - [ ] Initial privacy-utility experiments
 
-### Winter Quarter 2025
+### Winter Quarter 2026
 - [ ] LSH-ANN private retrieval
 - [ ] MME/Beacon adapters
 - [ ] Containerized service
 - [ ] Real data integration (if approved)
 
-### Spring Quarter 2025
+### Spring Quarter 2026
 - [ ] Comprehensive evaluation
 - [ ] Leakage audits
 - [ ] Final thesis and open-source release
@@ -134,7 +134,7 @@ matches = matcher.find_matches(query_phenopacket, database_phenopackets)
 - **HPO Ontology**: Public Human Phenotype Ontology
 - **Published Prevalence**: Aggregated statistics from literature
 
-### Planned (Winter/Spring 2025)
+### Planned (Winter/Spring 2026)
 - **MIMIC-IV**: De-identified ICU EHR data (application pending)
 - **STARR-OMOP-deid**: Stanford de-identified EHR (application pending)
 
@@ -181,4 +181,3 @@ Montgomery Lab - Stanford University School of Medicine
 
 - Professor Stephen Montgomery (Advisor)
 - Stanford CS Honors Program
-- Montgomery Lab members
