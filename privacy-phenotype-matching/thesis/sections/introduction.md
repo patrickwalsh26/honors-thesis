@@ -48,17 +48,17 @@ Research at the intersection of privacy and genomics has explored applications o
 
 This thesis presents a privacy-preserving phenotype matching framework that enables federated rare disease cohort discovery while protecting patient confidentiality. Our contributions are:
 
-1. **A Modular Privacy Framework.** We design and implement a composable privacy pipeline integrating Private Set Intersection, differential privacy, and k-anonymity. Each mechanism addresses distinct privacy threats, and their combination provides layered protection. The framework is configurable, allowing institutions to balance privacy and utility according to their requirements and regulatory constraints.
+1. **A formal threat model and modular privacy framework.** We specify a two-party semi-honest threat model with auxiliary information, three concrete adversary goals (membership inference, attribute inference, singling-out re-identification), and per-protocol-step disclosure analysis (§3.1.2). Against that model we design and implement a composable pipeline integrating Diffie-Hellman PSI, Laplace/Gaussian/Exponential differential privacy mechanisms, and k-anonymity with rare-term filtering, and prove three composition-level privacy invariants.
 
-2. **Semantic Phenotype Similarity.** We implement and evaluate multiple phenotype similarity metrics—Jaccard, cosine, and Resnik—leveraging the HPO ontology structure and information content weighting. We demonstrate that semantic approaches improve retrieval performance compared to exact-match methods, with information content weighting providing particular benefit for rare disease phenotypes.
+2. **Empirically validated retrieval on real published patients.** Beyond synthetic-cohort experiments standard in the literature, we evaluate the system on 1,500 Phenopacket Store (Danis et al., 2025) patients drawn from published case reports with confirmed OMIM diagnoses, achieving MRR = 0.87 and nDCG@10 = 0.69 — within the Phenomizer/LIRICAL band. A full Resnik+BMA Phenomizer-style baseline runs on the same corpus for direct comparison.
 
-3. **GA4GH Standards Compatibility.** Our implementation natively supports GA4GH Phenopackets v2.0, Beacon v2 query semantics, and Matchmaker Exchange message formats. This compatibility enables integration with existing federated networks and promotes adoption within the rare disease research community.
+3. **Empirical privacy measurement.** We implement Yeom-threshold and Shokri-shadow membership-inference attacks against the DP score-release oracle and a singling-out attack against the k-anonymity gate, producing the privacy-utility Pareto curves used to validate the formal invariants. Shadow-model attack ROC AUC drops from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 reduces re-identification probability against the rare-term adversary from 0.42 to 0.005.
 
-4. **Comprehensive Evaluation on Real Disease Data.** We construct evaluation datasets from the HPO phenotype annotation corpus, comprising 12,974 diseases with curated phenotype associations from OMIM and Orphanet. Using synthetic patients generated from these real disease profiles, we evaluate baseline retrieval performance (achieving nDCG@10 > 99%) and characterize privacy-utility tradeoffs across mechanism configurations.
+4. **The synthetic-to-real DP gap.** We document and explain a 20–50× discrepancy between safe ε on synthetic and real cohorts and identify rank-based mechanisms (Report-Noisy-Max, Exponential) as the principled response. This finding has direct implications for published privacy-utility analyses that rely solely on disease-profile-sampled cohorts.
 
-5. **Privacy Attack Simulation.** We implement membership inference and attribute inference attacks to empirically measure privacy leakage under various protection configurations. These adversarial evaluations complement theoretical privacy guarantees with empirical evidence.
+5. **GA4GH standards compatibility.** The implementation natively supports GA4GH Phenopackets v2.0, Beacon v2 query semantics, and Matchmaker Exchange message formats, enabling integration with existing federated networks.
 
-6. **Open-Source Implementation.** We release our complete implementation—approximately 4,500 lines of Python code—under an open-source license, enabling reproducibility and extension by the research community.
+6. **Open-source release.** Approximately 4,500 lines of Python under an open-source license, with reproducible evaluation pipelines for both synthetic and Phenopacket Store cohorts.
 
 ## 1.6 Thesis Organization
 

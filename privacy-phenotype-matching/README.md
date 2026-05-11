@@ -159,6 +159,24 @@ pytest tests/
 pytest --cov=src tests/
 ```
 
+## Reproducing thesis figures
+
+The Makefile regenerates every figure and result table from a clean checkout:
+
+```bash
+# Local: install deps, then run everything
+pip install -r requirements.txt
+make reproduce            # data download → attacks + benchmark, ≈10 min
+
+# Or fully containerised (no host-side Python needed):
+docker build -t ppm .
+docker run --rm -v "$PWD/results:/app/results" -v "$PWD/figures:/app/figures" ppm
+```
+
+Individual targets: `make data` (download Phenopacket Store), `make attacks`
+(MIA + k-anonymity ablation → Figs 10–11), `make benchmark` (real-cohort
+retrieval → Fig 12). `make clean` removes generated artefacts.
+
 ## Citation
 
 If you use this code, please cite:
