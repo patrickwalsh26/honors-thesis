@@ -4,6 +4,8 @@
 **Author:** Patrick Walsh
 **Advisor:** Professor Stephen Montgomery
 
+**Live pilot:** <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/> — interactive demo of the privacy-preserving phenotype matching pipeline against a 1,500-patient real-case cohort.
+
 ## Overview
 
 This project develops and evaluates a privacy-preserving discovery tool that enables peer institutions to identify "patients like mine" using standardized phenotypes without sharing raw medical records or protected health information (PHI). The system uses cryptographic protocols and differential privacy to enable secure phenotype matching for rare disease research.

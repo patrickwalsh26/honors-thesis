@@ -382,7 +382,7 @@ To demonstrate the framework's behavior interactively, we built a single-page we
 
 The pilot omits the cryptographic Private Set Intersection layer because PSI's contribution is invisible to a single-user demonstration — the released similarity scores carry the same DP and k-anonymity guarantees regardless of whether the underlying overlap computation was protected by PSI. A production federated deployment would route the score computation through the two-party PSI protocol of §3.4.1; the user-facing behavior of the pilot is unchanged.
 
-Figure 13 shows the running application. The system is deployed publicly via Streamlit Community Cloud and links from the project repository.
+Figure 13 shows the running application. The system is deployed publicly at <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/> via Streamlit Community Cloud and links from the project repository.
 
 ![Pilot system after one query (ε = 5, k = 5, rare-term threshold 0.01). Sidebar shows privacy controls and the per-session ε budget (5.00 spent after one query). The result table reports the top-5 ranked patients with their DP-noised similarity scores, OMIM disease labels, and the count of shared phenotypes after rare-term filtering. The expanded privacy trace details each mechanism's effect.](figures/fig13_pilot_app_screenshot.png){#fig:pilot width=95%}
 
