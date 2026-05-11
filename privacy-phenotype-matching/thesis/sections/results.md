@@ -245,7 +245,61 @@ Figure 3 (not shown) plots the privacy-utility Pareto frontier, identifying opti
 - **Balanced**: ε = 2.0, k = 5, 1% filter → nDCG@10 = 0.928
 - **High privacy, reduced utility**: ε = 1.0, k = 5, 2% filter → nDCG@10 = 0.851
 
-## 4.5 Computational Performance
+## 4.5 Empirical Privacy: Adversarial Attack Evaluation
+
+The Pareto analysis above (§4.4) reports privacy parameters; it does not by itself demonstrate that those parameters thwart real adversaries. To close this gap we instantiate the two attacks described in the threat model (§3.1.2) and measure their empirical success against our system: a membership-inference attack on the DP score-release oracle (privacy invariant **I2**) and a singling-out attack against the k-anonymity gate (invariant **I3**).
+
+### 4.5.1 Membership-Inference Attack vs. Differential Privacy
+
+Following the membership-inference (MI) literature, we evaluate two attackers against the IC-weighted cosine retrieval oracle wrapped in the Laplace mechanism:
+
+- A **threshold attacker** (Yeom et al., 2018) submits the target patient as a query, observes the max returned similarity, and decides "member" if the score exceeds a threshold. The AUC of the resulting ROC measures the attacker's discriminative power without committing to a threshold.
+- A **shadow-model attacker** (Shokri et al., 2017) trains a Random Forest classifier on features extracted from query-response distributions (max, mean, std, gap, percentile quantiles) over three independently sampled shadow databases (250 patients each, 80 in/80 out per shadow). The trained classifier is evaluated on a held-out shadow split.
+
+We sweep $\varepsilon \in \{0.1, 0.5, 1.0, 2.0, 5.0, 10.0, +\infty\}$, where $\varepsilon = +\infty$ denotes the non-private baseline. The 500-patient HPOA cohort is split 50/50 into members and non-members.
+
+**Table 11: Membership-inference attack ROC AUC vs. DP budget.** Higher AUC = stronger attack. AUC = 0.5 is random guessing.
+
+| ε | Threshold attack AUC | Shadow-model attack AUC | Defender advantage* |
+|---|---------------------|--------------------------|---------------------|
+| ∞ (no DP) | 0.967 | 0.976 | 0.000 |
+| 10 | 0.882 | 0.909 | 0.075 |
+| 5 | 0.578 | 0.617 | 0.389 |
+| 2 | 0.500 | 0.519 | 0.476 |
+| 1 | 0.500 | 0.500 | 0.481 |
+| 0.5 | 0.500 | 0.500 | 0.481 |
+| 0.1 | 0.500 | 0.500 | 0.481 |
+
+\*Defender advantage = (AUC$_{\varepsilon=\infty}$ − AUC$_{\varepsilon}$), averaged over both attackers.
+
+Figure 10 plots the privacy-utility frontier. Three regimes are apparent: (i) **practical privacy** at $\varepsilon \leq 2.0$, where both attackers are reduced to random guessing despite full transcript access; (ii) a **transition band** at $2.0 < \varepsilon < 10.0$, where the shadow-model attacker recovers signal faster than the simple threshold attacker; and (iii) a **vulnerable** regime at $\varepsilon \geq 10.0$, where AUC exceeds 0.88 — DP at this budget should be regarded as non-protective in this deployment. The shadow-model attacker uniformly dominates the threshold attacker in the transition regime, illustrating that simple-score thresholds underestimate the adversary capability available to a real attacker.
+
+Crucially, the regime where DP successfully defends against MI ($\varepsilon \leq 2.0$) overlaps with the regime where retrieval utility remains usable (nDCG@10 = 0.928 at $\varepsilon = 2.0$ per §4.4.1). This is the central operating-point claim of the thesis: $\varepsilon \approx 1$–$2$ simultaneously delivers strong empirical MI resistance and acceptable retrieval performance.
+
+### 4.5.2 Singling-Out Attack and k-Anonymity Ablation
+
+The DP analysis above protects against membership inference but does not by itself prevent singling-out via rare phenotype quasi-identifiers. We evaluate the k-anonymity gate of §3.4.3 against the rare-term singling-out adversary defined in §3.1.2.
+
+**Threat realization.** The adversary holds a single rare HPO term $t$ known to apply to a target patient (e.g., inferred from a publication or registry). They query the database for all patients exhibiting $t$. Without protection, the system returns the cohort $S_t = \{P : t \in \Phi(P)\}$, and uniform-random selection inside $S_t$ identifies the target with probability $1/|S_t|$. The k-anonymity gate suppresses the response (returns $\bot$) when $|S_t| < k$.
+
+We enumerated every HPO term in the cohort with cohort prevalence $1 \leq |S_t| \leq 50$ (1,142 terms; median $|S_t| = 4$, max $|S_t| = 46$), and measured the expected re-identification probability $\Pr_{\text{re-id}} = \mathbb{E}_t [\mathbb{1}\{|S_t| \geq k\} / |S_t|]$ across that distribution.
+
+**Table 12: k-anonymity ablation against rare-term singling-out (n = 1,142 rare terms).**
+
+| k | Suppression rate | Re-id probability (post-gate) | Singling-out rate (post-gate) | Mean released cohort size |
+|---|-----------------|-------------------------------|-------------------------------|---------------------------|
+| 1 (no gate) | 0.000 | 0.419 | 0.224 | 4.4 |
+| 2 | 0.224 | 0.195 | 0.000 | 5.4 |
+| 5 | 0.678 | 0.048 | 0.000 | 8.3 |
+| 10 | 0.926 | 0.005 | 0.000 | 15.5 |
+| 20 | 0.988 | 0.0005 | 0.000 | 26.9 |
+| 50 | 1.000 | 0.000 | 0.000 | — |
+
+Figure 11 visualizes both axes of the tradeoff: suppression rate climbs steeply between $k = 2$ and $k = 10$ (22% → 93%), while re-identification probability collapses by nearly three orders of magnitude (0.419 → 0.005). Crucially, even at $k = 2$ the singling-out rate drops to 0 — every rare term that originally identified a unique patient is now blocked. The persistent re-id probability at $k = 2$ (19.5%) comes entirely from queries that *are* released ($|S_t| \geq 2$), where the attacker still benefits from small cohort sizes; this is the gap that **rare-term filtering** (§4.4.3) closes by suppressing the query before it ever reaches the gate.
+
+**Composition.** Combining $\varepsilon = 1.0$ DP (§4.5.1) with $k = 5$ k-anonymity reduces both attack surfaces simultaneously: MI attack AUC = 0.500 and rare-term re-identification probability ≤ 0.048, while retaining nDCG@10 = 0.870 (§4.4.4 composed configuration). This is the recommended deployment configuration for production use.
+
+## 4.6 Computational Performance
 
 We measured computational overhead for the privacy-preserving pipeline components.
 
@@ -266,7 +320,7 @@ The dominant cost is similarity computation (3.7 ms per query patient), which sc
 
 For a database of 10,000 patients, per-query latency would be approximately 40 seconds for full similarity computation, or 2 minutes with PSI. Approximate methods (locality-sensitive hashing) could reduce this to sub-second latency at the cost of retrieval accuracy.
 
-## 4.6 Summary of Key Findings
+## 4.7 Summary of Key Findings
 
 Our experimental evaluation yields the following principal findings:
 
@@ -276,9 +330,13 @@ Our experimental evaluation yields the following principal findings:
 
 3. **Privacy is achievable with moderate utility cost.** Combined privacy mechanisms (ε = 5.0, k = 5, 1% filter) preserve 96.5% of baseline utility while providing layered protection.
 
-4. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+4. **Differential privacy empirically thwarts membership inference at deployable budgets.** Shadow-model attack ROC AUC drops from 0.976 (no DP) to 0.500 (random guessing) at ε = 1.0, while nDCG@10 remains above 0.85. The threshold attack and shadow attack agree on this transition.
 
-5. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
+5. **k-anonymity collapses singling-out by orders of magnitude.** Expected re-identification probability against the rare-term adversary falls from 0.419 (no gate) to 0.005 at k = 10, with all unique-patient queries suppressed even at k = 2.
+
+6. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+
+7. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
 
 ---
 
