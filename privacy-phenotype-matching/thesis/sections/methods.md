@@ -2,11 +2,59 @@
 
 ## 3.1 System Overview
 
+### 3.1.1 Architecture
+
 We present a privacy-preserving phenotype matching framework that enables federated rare disease patient discovery while protecting sensitive clinical information. Our system integrates three complementary privacy mechanisms—Private Set Intersection (PSI), differential privacy (DP), and k-anonymity—within a modular architecture compatible with established genomic data sharing standards.
 
 The framework operates on patient records encoded as GA4GH Phenopackets (Jacobsen et al., 2022), with phenotypes represented using Human Phenotype Ontology (HPO) terms (Köhler et al., 2021). Given a query patient *Q* and a database of *n* patients *D = {P₁, P₂, ..., Pₙ}*, the system computes privacy-preserving similarity scores *s(Q, Pᵢ)* and returns the top-*k* most similar patients without revealing the precise phenotype overlap or non-matching terms.
 
 Figure 1 illustrates the system architecture. A query phenopacket first undergoes rare term filtering to remove quasi-identifying phenotypes. The filtered query then enters the PSI protocol, which computes set intersection cardinality without revealing individual terms. Differential privacy noise is added to similarity scores, and finally, k-anonymity checks suppress results from insufficiently sized cohorts.
+
+### 3.1.2 Threat Model
+
+We adopt a precise threat model to ground the privacy guarantees of the mechanisms presented in §3.4. Our formulation follows the conventions of the secure-computation literature (Lindell, 2017) and the differential privacy literature (Dwork & Roth, 2014), and is restricted to the deployment scenario most relevant to clinical practice: two institutions wishing to discover whether a query patient resembles patients held by a peer institution.
+
+**Parties.** Two parties participate in every protocol invocation:
+
+- The **query party** $\mathcal{Q}$ holds a single query phenopacket $Q$ with phenotype set $\Phi(Q)$. $\mathcal{Q}$ wishes to learn the cardinality, identity, or rank of similar patients held by the peer.
+- The **server party** $\mathcal{S}$ holds a database $D = \{P_1, \ldots, P_n\}$ of phenopackets and a precomputed information-content table $\text{IC}(\cdot)$ derived from a reference corpus.
+
+We do not assume a trusted third party. Multi-party extensions to $k \geq 3$ peers reduce to repeated pairwise invocations under the same model.
+
+**Adversary capabilities.** We consider the standard **semi-honest (honest-but-curious)** adversary model: each party adheres to the protocol specification but attempts to infer information beyond what the protocol output reveals. Concretely, the adversary corrupting party $X \in \{\mathcal{Q}, \mathcal{S}\}$ obtains the complete transcript $\tau_X$ of messages $X$ sends and receives, the internal state of $X$, and arbitrary polynomial-time computation over both. We additionally assume the adversary holds **auxiliary information** $\mathcal{A}$: knowledge of HPO term prevalence in public corpora (HPOA, OMIM, Orphanet), demographic priors, and the published clinical literature linking phenotypes to diseases. This conservatively models the realistic adversary who can read PubMed.
+
+**Adversary goals.** We defend against three concrete goals:
+
+1. **Membership inference (MI):** given a target phenopacket $P^\ast$ and transcripts $\{\tau\}$ from one or more queries, decide whether $P^\ast \in D$ (Shokri et al., 2017).
+2. **Attribute inference (AI):** given a partial phenopacket $P^\ast$ with phenotype subset $\Phi^- \subset \Phi(P^\ast)$, infer a withheld phenotype $t \in \Phi(P^\ast) \setminus \Phi^-$ from transcripts and $\mathcal{A}$ (Yeom et al., 2018).
+3. **Singling-out re-identification:** identify a unique patient in $D$ via rare phenotype combinations acting as quasi-identifiers (Sweeney, 2002; El Emam et al., 2011).
+
+**Disclosure analysis.** Table 3 enumerates, per protocol step and per party, what the transcript reveals under the semi-honest model. Privacy claims (I1–I3) below are proven against this transcript.
+
+**Table 3: Per-step disclosure to a semi-honest adversary corrupting each party.**
+
+| Step | Query party $\mathcal{Q}$ learns | Server $\mathcal{S}$ learns |
+|------|---------------------------------|-----------------------------|
+| 1. Rare-term filter (local) | nothing (local to $\mathcal{Q}$) | nothing |
+| 2. PSI exchange (DH-PSI on $\mathbb{P}\text{-256}$) | $\|\Phi(Q) \cap \Phi(P_i)\|$ for each $P_i$, or $\{H(t)^{\alpha\beta} : t \in \Phi(Q)\}$ in cardinality-only mode | $\|\Phi(Q)\|$ and the set of blinded query points |
+| 3. Similarity score release | $\tilde{s}(Q, P_i) = s(Q, P_i) + \text{Lap}(1/\varepsilon)$ for each $P_i$ | nothing beyond Step 2 |
+| 4. $k$-anonymity gate | top-$k$ identifiers if $\|\text{matches}\| \geq k$; otherwise the symbol $\bot$ | the value of $\|\text{matches}\| \geq k$ (one bit) |
+
+**Privacy invariants.** Composing the mechanisms in §3.4 yields three formal invariants:
+
+- **(I1) PSI semantic security.** Under the Decisional Diffie-Hellman assumption on $\mathbb{P}\text{-256}$, the PSI transcript reveals no information beyond $\Phi(Q) \cap \Phi(P_i)$ (or its cardinality) to either party in the semi-honest model. The simulation-based proof follows the standard DH-PSI argument of Meadows (1986); the simulator constructs $\mathcal{Q}$'s view from $\Phi(Q) \cap \Phi(P_i)$ alone using uniformly random group elements as replacements for the unseen blinded server points, and the views are computationally indistinguishable under DDH by the framework of Lindell (2017).
+- **(I2) $(\varepsilon, \delta)$-differential privacy of score release.** The Laplace mechanism with scale $1/\varepsilon$ applied to similarity scores $s(\cdot, \cdot) \in [0, 1]$ ensures the released score $\tilde{s}(Q, P_i)$ satisfies $(\varepsilon, 0)$-DP with respect to the inclusion of any single record $P_j \in D$. Across $q$ queries by the same party, basic composition yields $(q\varepsilon, 0)$-DP; advanced composition (Kairouz et al., 2015) yields $(\varepsilon\sqrt{2q\ln(1/\delta')}, \delta')$-DP for any $\delta' > 0$.
+- **(I3) $k$-anonymity of result release.** The gate of §3.4.3 ensures that any returned result set corresponds to a cohort of at least $k$ records sharing the matched phenotype subset, providing $k$-anonymity against singling-out (Sweeney, 2002). Combined with rare-term suppression at prevalence threshold $\tau$, the released subset satisfies $k$-anonymity over the quasi-identifying terms.
+
+**Out-of-scope threats.** We make our boundaries explicit:
+
+- **Malicious adversaries** deviating from the protocol (e.g., crafting non-uniform blinding scalars, sending malformed curve points) are out of scope. Production deployment would require a malicious-secure PSI variant (Pinkas et al., 2018) or zero-knowledge proofs of correct execution; we discuss costs in §6.3.
+- **Side channels** — query timing, network traffic patterns, and CPU/cache leakage — are not addressed by the cryptographic analysis. We assume the transport is TLS-protected.
+- **Insider compromise** of the server's plaintext database, key material, or IC table is out of scope; standard institutional access controls are presumed.
+- **Cross-protocol linkage** by an adversary observing both query transcripts and an external rare-disease registry containing $D$'s patients (e.g., DECIPHER) may permit re-identification despite our protections. We quantify residual leakage empirically in §4 (membership-inference experiment) but do not claim cryptographic resistance.
+- **Repeated adaptive queries** by a single party are bounded by the privacy accountant (§3.4.4), but a coalition of colluding query parties can in principle multiply the budget; defense requires inter-institutional coordination of the budget and is out of scope here.
+
+This threat model — semi-honest, two-party, auxiliary-information-bearing, with disclosure analyzed at each protocol step — is the contract against which our privacy guarantees in the remainder of the chapter are proven and the privacy attacks in §4 are evaluated.
 
 ## 3.2 Data Representation
 

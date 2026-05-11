@@ -169,6 +169,9 @@ This bibliography consolidates all references cited throughout the thesis, organ
 
 ## K
 
+**Kairouz, P.**, Oh, S., & Viswanath, P. (2015). The Composition Theorem for Differential Privacy. In *Proceedings of the 32nd International Conference on Machine Learning (ICML)* (Vol. 37, pp. 1376-1385). PMLR.
+- *Cited in: §3.1.2 (Threat Model — advanced composition)*
+
 **Köhler, S.**, Carmody, L., Vasilevsky, N., Jacobsen, J. O. B., Danis, D., Gourdine, J. P., ... & Robinson, P. N. (2019). Expansion of the Human Phenotype Ontology (HPO) Knowledge Base and Resources. *Nucleic Acids Research*, 47(D1), D1018-D1027. https://doi.org/10.1093/nar/gky1105
 - *Cited in: §2.1.1 (HPO Growth), §4.2.2 (Phenotype Distribution)*
 
