@@ -6,18 +6,15 @@ This thesis demonstrates that privacy-preserving phenotype matching is both tech
 
 ## Summary of Contributions
 
-**1. Privacy-Preserving Framework.** We designed and implemented a composable privacy pipeline where each mechanism addresses distinct threat vectors. PSI enables secure phenotype overlap computation without revealing non-matching terms. Differential privacy provides rigorous, quantifiable bounds on information leakage. K-anonymity and rare term filtering protect against quasi-identifier inference from rare phenotype combinations. These mechanisms compose naturally, providing defense in depth.
+**1. Formal threat model and modular privacy framework.** We specified a two-party semi-honest threat model with auxiliary information, three concrete adversary goals, and per-step disclosure analysis. The composition of Diffie-Hellman PSI, differentially-private score release, and a k-anonymity gate is proven against three privacy invariants (PSI semantic security under DDH, $(\varepsilon,\delta)$-DP of released similarities, k-anonymity of result release).
 
-**2. Semantic Phenotype Similarity.** We implemented multiple similarity metrics spanning set-theoretic (Jaccard), vector-space (Cosine), and semantic (Resnik) approaches. Information content weighting, derived from the HPO annotation corpus, emphasizes rare, diagnostically specific phenotypes. Our evaluation confirms that IC-weighted metrics outperform unweighted alternatives, achieving MRR = 1.000 and nDCG@10 = 99.7% on disease-sharing patient retrieval.
+**2. Empirically validated retrieval on real published patients.** On 1,500 Phenopacket Store patients across 100 OMIM diseases, non-private IC-weighted cosine retrieval achieves MRR = 0.87 and nDCG@10 = 0.69 — within the Phenomizer/LIRICAL band. The full Resnik+BMA Phenomizer-style baseline runs on the same corpus and is essentially tied with our simpler metric.
 
-**3. GA4GH Standards Compatibility.** Our implementation natively supports Phenopackets v2.0 for patient representation, HPO for phenotype encoding, and adapters for Beacon and MME interfaces. This compatibility positions the framework for integration with existing rare disease infrastructure, lowering adoption barriers.
+**3. Empirically measured privacy defense.** Shadow-model membership-inference attack ROC AUC collapses from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 cuts re-identification probability against the rare-term singling-out adversary from 0.42 to 0.005.
 
-**4. Comprehensive Evaluation.** Using synthetic patients generated from 12,974 real disease-phenotype associations in OMIM and Orphanet, we characterized privacy-utility tradeoffs across mechanism configurations. Key findings include:
-- Moderate privacy parameters (ε = 5.0, k = 5, 1% filtering) preserve 96.5% of baseline utility
-- Privacy costs increase smoothly with protection strength, enabling informed parameter selection
-- Mechanism composition provides layered protection without compounding utility loss
+**4. The synthetic-to-real privacy budget gap.** The safe Laplace-DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest. Per-score Laplace noise is the wrong choice for real cohorts because real similarity-score distributions are compressed; rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response. Privacy-utility claims grounded only in synthetic experiments should be treated as upper bounds on real-world performance.
 
-**5. Open-Source Release.** Our complete implementation—approximately 4,500 lines of Python code—is released under an open-source license. The release includes similarity metrics, privacy mechanisms, evaluation scripts, and synthetic data generators, enabling reproducibility and extension by the research community.
+**5. GA4GH standards compatibility and open-source release.** Native Phenopackets v2.0, HPO, Beacon v2, and MME adapters. The complete implementation (~4,500 lines of Python) ships with a Dockerfile and Makefile that regenerate every figure and table in ~4 minutes from a clean checkout.
 
 ## Broader Impact
 
@@ -31,7 +28,7 @@ More broadly, this thesis illustrates how privacy-enhancing technologies can exp
 
 The 300 million people living with rare diseases deserve the benefits of collaborative research. Privacy-preserving computation offers a path forward—protecting individual confidentiality while unlocking the collective knowledge distributed across institutions worldwide. This thesis represents one step on that path.
 
-Much work remains. Validation on real patient cohorts, extension to multi-omic data, integration with clinical workflows, and advancement of interoperability standards are all essential for translation to practice. We hope this work provides a foundation for these efforts and contributes to the ultimate goal: ending the diagnostic odyssey for rare disease patients everywhere.
+Much work remains. Rank-based DP mechanisms (Report-Noisy-Max, Exponential) need to be evaluated against the same real cohort to determine whether they recover utility at the ε values infeasible for Laplace. Larger and more heterogeneous cohorts — including EHR-derived data which would further stress the synthetic-to-real gap — would refine the privacy-utility curves. Multi-omic extension, malicious-secure cryptographic protocols, and integration with clinical workflows are all essential next steps for translation to practice. We hope this work provides a foundation for these efforts and contributes to the ultimate goal: ending the diagnostic odyssey for rare disease patients everywhere.
 
 ---
 

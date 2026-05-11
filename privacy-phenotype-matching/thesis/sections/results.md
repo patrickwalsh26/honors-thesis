@@ -364,7 +364,7 @@ Our experimental evaluation yields the following principal findings:
 
 2. **IC weighting improves performance.** Information content weighting, which emphasizes rare phenotypes, provides consistent improvement over unweighted approaches (Resnik: MRR = 1.000 vs. Jaccard: MRR = 0.998).
 
-3. **Privacy is achievable with moderate utility cost.** Combined privacy mechanisms (ε = 5.0, k = 5, 1% filter) preserve 96.5% of baseline utility while providing layered protection.
+3. **On the synthetic cohort, privacy is achievable with moderate utility cost.** Combined privacy mechanisms (ε = 5.0, k = 5, 1% filter) preserve 96.5% of baseline utility while providing layered protection — but this is a synthetic-cohort result that should be read alongside findings 7–8 below.
 
 4. **Differential privacy empirically thwarts membership inference at deployable budgets.** Shadow-model attack ROC AUC drops from 0.976 (no DP) to 0.500 (random guessing) at ε = 1.0, while nDCG@10 remains above 0.85. The threshold attack and shadow attack agree on this transition.
 

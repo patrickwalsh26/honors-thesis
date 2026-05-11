@@ -51,6 +51,16 @@ Research questions include:
 
 This direction leverages the unique structure of phenotype data that distinguishes it from generic set matching.
 
+### 6.1.6 Rank-Based DP Mechanisms for Real-Cohort Retrieval
+
+The synthetic-to-real DP gap of §5.1.5 — where the safe Laplace budget is 20–50× larger on real patients than synthetic ones — is the most pressing follow-up direction for this thesis. The proposed solution, rank-based DP, is theoretically straightforward but has not been evaluated against the real Phenopacket Store cohort:
+
+- **Report-Noisy-Max (RNM)** (Dwork & Roth, 2014, §3.3) adds Laplace noise to each candidate score and returns the argmax; the noise scale relates to query sensitivity rather than the (compressed) signal range, decoupling protection from real-cohort score statistics.
+- **Exponential mechanism** (McSherry & Talwar, 2007) samples a result with probability proportional to $\exp(\varepsilon \cdot \text{utility} / 2 \Delta_u)$; for top-k retrieval, sequential application gives k-element output under composition.
+- **Permute-and-Flip** (McKenna & Sheldon, 2020) and **GAP-K** (Bassily et al., 2021) provide variance-reduced alternatives for top-k that may further close the synthetic-to-real gap.
+
+The empirical question is: at what ε do these mechanisms recover ≥80% of non-private nDCG@10 on the Phenopacket Store cohort? A negative result (ε still needs to exceed 10) would argue that the gap is intrinsic to the task rather than the mechanism; a positive result (ε ≈ 1–2 suffices) would deliver the practical deployment configuration our analysis currently leaves open.
+
 ## 6.2 System Improvements
 
 ### 6.2.1 Real-Time Privacy Budget Management
@@ -101,14 +111,11 @@ Each modality introduces distinct privacy considerations requiring tailored mech
 
 ### 6.3.1 Real Patient Cohort Evaluation
 
-Validation on actual patient cohorts is essential to confirm clinical utility. This requires:
+This thesis evaluates the system on 1,500 real published case-report patients from the Monarch Phenopacket Store (§4.6). Three further validation regimes are needed:
 
-- **IRB approval**: Protocol development for privacy-preserving research
-- **Institutional partnerships**: Collaboration with rare disease centers
-- **Retrospective evaluation**: Apply matching to historical cohorts with known diagnoses
-- **Blinded assessment**: Clinician evaluation of match quality without diagnostic labels
-
-The Undiagnosed Diseases Network (UDN) and GREGoR Consortium represent potential validation partners with large, characterized cohorts.
+- **EHR-derived cohorts**: Published case reports are better-phenotyped than typical EHRs; results §5.1.5 predict the privacy-utility gap will widen further on real clinical data
+- **Cross-institutional retrospective**: Apply matching to historical cohorts from the Undiagnosed Diseases Network (UDN) and GREGoR Consortium under appropriate IRB and data-use agreements
+- **Blinded clinical assessment**: Have clinicians evaluate match quality without diagnostic labels to ground retrieval metrics in clinical relevance
 
 ### 6.3.2 Prospective Clinical Trial
 
