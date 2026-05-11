@@ -49,6 +49,7 @@ data/synthetic/*.json
 data/synthetic/*.pkl
 data/mimic/
 data/starr/
+data/phenopacket_store/
 
 # Keep example/test data
 !data/synthetic/example_*.json

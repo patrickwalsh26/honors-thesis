@@ -299,7 +299,43 @@ Figure 11 visualizes both axes of the tradeoff: suppression rate climbs steeply 
 
 **Composition.** Combining $\varepsilon = 1.0$ DP (§4.5.1) with $k = 5$ k-anonymity reduces both attack surfaces simultaneously: MI attack AUC = 0.500 and rare-term re-identification probability ≤ 0.048, while retaining nDCG@10 = 0.870 (§4.4.4 composed configuration). This is the recommended deployment configuration for production use.
 
-## 4.6 Computational Performance
+## 4.6 External Validation: Real Published Patient Cohort
+
+The retrieval results in §4.2–4.4 use a synthetic cohort sampled from HPOA disease profiles. To check whether those numbers reflect real clinical phenotyping — known to be noisier, more variable, and less complete than disease-template sampling — we re-ran the evaluation on the **Monarch Phenopacket Store** (Danis et al., 2025), a curated collection of GA4GH phenopackets derived from published case reports with confirmed OMIM diagnoses and PMID provenance.
+
+After filtering for patients with ≥3 observed phenotypes from diseases with ≥2 documented patients, the cohort contains 8,343 real patients across 586 OMIM diseases. For tractable all-vs-all retrieval we constructed a balanced subsample of the 100 most-populated diseases capped at 15 patients each, yielding 1,500 patients for the experiments below.
+
+**Table 13: Retrieval performance on real published cohort (Phenopacket Store).** Best published rare-disease semantic-similarity systems (Phenomizer, LIRICAL) typically report MRR in the 0.7–0.9 range on similar tasks (Köhler et al., 2009; Robinson et al., 2020), placing our system within the established literature.
+
+| System | MRR | nDCG@10 | Recall@5 | P@1 |
+|--------|-----|---------|----------|-----|
+| Cosine-IC (this work, non-private) | **0.869** | **0.689** | **0.738** | **0.821** |
+| Resnik+BMA (Phenomizer-style, non-private) | 0.828 | 0.642 | 0.689 | 0.783 |
+
+Two findings are notable: (i) absolute retrieval performance drops by roughly 30% versus the synthetic cohort (MRR 1.00 → 0.87, nDCG 0.99 → 0.69), confirming that synthetic-cohort numbers materially over-estimate real-world utility; (ii) Cosine-IC outperforms full Resnik+BMA over the HPO DAG, suggesting that the additional ontology-traversal cost of Resnik buys little above IC-weighted vector matching when the IC priors are estimated from a sufficiently large corpus.
+
+### 4.6.1 Privacy-Utility Tradeoff on the Real Cohort
+
+Re-running the Laplace ε sweep on the same 1,500-patient cohort reveals a markedly steeper privacy-utility curve than the synthetic-cohort analysis of §4.4.1 suggested.
+
+**Table 14: Cosine-IC retrieval under the Laplace mechanism (Phenopacket Store cohort).**
+
+| ε | MRR | nDCG@10 | Recall@5 | P@1 |
+|---|-----|---------|----------|-----|
+| ∞ (no DP) | 0.869 | 0.689 | 0.738 | 0.821 |
+| 50 | 0.861 | 0.677 | 0.726 | 0.814 |
+| 20 | 0.786 | 0.582 | 0.629 | 0.723 |
+| 10 | 0.548 | 0.340 | 0.374 | 0.440 |
+| 5 | 0.194 | 0.090 | 0.092 | 0.087 |
+| 2 | 0.055 | 0.020 | 0.021 | 0.022 |
+| 1 | 0.034 | 0.012 | 0.012 | 0.011 |
+| 0.5 | 0.028 | 0.010 | 0.010 | 0.010 |
+
+Figure 12 plots the resulting curve. On the synthetic cohort (§4.4.1), ε = 1.0 retained ≥85% of baseline nDCG; on the real cohort, only ε ≥ 50 retains the equivalent fraction. The gap arises because real-patient similarity-score distributions are compressed — between-disease gaps are smaller and more overlapping than in disease-template-sampled patients — so the Laplace noise scale of 1/ε needed to dominate the signal is substantially larger.
+
+This finding has direct deployment implications. Privacy claims based on synthetic-cohort experiments are systematically optimistic: a deployed system targeting the empirical MI-defended regime of ε ≤ 1 (Table 11) would deliver retrieval performance close to random on real patients with this metric. Practical deployment requires either (a) report-noisy-max or exponential-mechanism alternatives whose noise scales with rank rather than score, (b) IC reweighting tuned to compress within-disease score variance, or (c) acceptance of larger ε with stronger k-anonymity to compensate. We return to this in §6.2.
+
+## 4.7 Computational Performance
 
 We measured computational overhead for the privacy-preserving pipeline components.
 
@@ -320,7 +356,7 @@ The dominant cost is similarity computation (3.7 ms per query patient), which sc
 
 For a database of 10,000 patients, per-query latency would be approximately 40 seconds for full similarity computation, or 2 minutes with PSI. Approximate methods (locality-sensitive hashing) could reduce this to sub-second latency at the cost of retrieval accuracy.
 
-## 4.7 Summary of Key Findings
+## 4.8 Summary of Key Findings
 
 Our experimental evaluation yields the following principal findings:
 
@@ -334,9 +370,13 @@ Our experimental evaluation yields the following principal findings:
 
 5. **k-anonymity collapses singling-out by orders of magnitude.** Expected re-identification probability against the rare-term adversary falls from 0.419 (no gate) to 0.005 at k = 10, with all unique-patient queries suppressed even at k = 2.
 
-6. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+6. **Real-cohort validation places our system in the published literature's range.** On 1,500 real published-case-report patients from 100 OMIM diseases (Phenopacket Store), Cosine-IC retrieval achieves MRR = 0.87 and nDCG@10 = 0.69 — within the 0.7–0.9 MRR band typical of Phenomizer/LIRICAL-class systems. Resnik+BMA over the full HPO DAG is essentially tied with the simpler Cosine-IC.
 
-7. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
+7. **Synthetic cohorts overestimate the safe DP budget by 1–2 orders of magnitude.** ε = 1 preserves >85% of synthetic-cohort nDCG but only ~2% of real-cohort nDCG; ε ≥ 20 is needed for comparable retention on real patients. Practical deployment cannot rely on synthetic-cohort privacy claims.
+
+8. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+
+9. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
 
 ---
 

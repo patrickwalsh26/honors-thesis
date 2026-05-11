@@ -52,6 +52,9 @@ This bibliography consolidates all references cited throughout the thesis, organ
 ## D
 
 **Damgård, I.**, Pastro, V., Smart, N., & Zakarias, S. (2012). Multiparty Computation from Somewhat Homomorphic Encryption. In *Advances in Cryptology – CRYPTO 2012* (pp. 643-662). Springer.
+
+**Danis, D.**, Bamshad, M. J., Bridges, Y., Caballero-Oteyza, A., Cacheiro, P., Carmody, L. C., ... & Robinson, P. N. (2025). A corpus of GA4GH phenopackets: case-level phenotyping for genomic diagnostics and discovery. *Human Genetics and Genomics Advances*, 6(1), 100371. https://doi.org/10.1016/j.xhgg.2024.100371
+- *Cited in: §4.6 (External Validation Cohort)*
 - *Cited in: §2.4.4 (Secret Sharing MPC)*
 
 **Dankar, F. K.**, & El Emam, K. (2013). Practicing Differential Privacy in Health Care: A Review. *Transactions on Data Privacy*, 6(1), 35-67.
