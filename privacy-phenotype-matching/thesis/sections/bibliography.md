@@ -22,6 +22,9 @@ This bibliography consolidates all references cited throughout the thesis, organ
 
 ## B
 
+**Bassily, R.**, Mouzakis, A., Singhal, A., Steinke, T., Sun, Y., Thakurta, A. (2021). Differentially Private Top-k Selection via Stability on Unknown Domain. In *Conference on Uncertainty in Artificial Intelligence (UAI)*. PMLR.
+- *Cited in: §6.1.6 (One-Shot Top-k)*
+
 **Bhoj, E. J.**, Li, D., Harr, M., Edvardson, S., Elpeleg, O., Chisholm, E., ... & Bhoj, E. J. (2016). Mutations in TBCK, Encoding TBC1-Domain-Containing Kinase, Lead to a Recognizable Syndrome of Intellectual Disability and Hypotonia. *American Journal of Human Genetics*, 98(4), 782-788. https://doi.org/10.1016/j.ajhg.2016.03.016
 - *Cited in: §2.3.1 (Matchmaker Exchange)*
 
@@ -213,8 +216,11 @@ This bibliography consolidates all references cited throughout the thesis, organ
 **McMahan, B.**, Moore, E., Ramage, D., Hampson, S., & y Arcas, B. A. (2017). Communication-Efficient Learning of Deep Networks from Decentralized Data. In *Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS)* (pp. 1273-1282). PMLR.
 - *Cited in: §6.1.3 (Federated Learning)*
 
+**McKenna, R.**, & Sheldon, D. (2020). Permute-and-Flip: A New Mechanism for Differentially Private Selection. In *Advances in Neural Information Processing Systems* (Vol. 33, pp. 193-203).
+- *Cited in: §6.1.6 (Variance-Reduced Rank-Based Mechanisms)*
+
 **McSherry, F.**, & Talwar, K. (2007). Mechanism Design via Differential Privacy. In *48th Annual IEEE Symposium on Foundations of Computer Science* (pp. 94-103). IEEE.
-- *Cited in: §2.4.2 (Exponential Mechanism), §3.4.2 (DP Mechanisms)*
+- *Cited in: §2.4.2 (Exponential Mechanism), §3.4.2 (DP Mechanisms), §4.7 (Rank-Based DP), §5.1.5 (Rank-Utility Fix)*
 
 **Meadows, C.** (1986). A More Efficient Cryptographic Matchmaking Protocol for Use in the Absence of a Continuously Available Third Party. In *1986 IEEE Symposium on Security and Privacy* (pp. 134-137). IEEE.
 - *Cited in: §1.4 (PSI Origins), §2.4.1 (DH-PSI), §3.4.1 (PSI Protocol)*

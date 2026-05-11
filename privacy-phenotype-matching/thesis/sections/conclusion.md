@@ -12,7 +12,7 @@ This thesis demonstrates that privacy-preserving phenotype matching is both tech
 
 **3. Empirically measured privacy defense.** Shadow-model membership-inference attack ROC AUC collapses from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 cuts re-identification probability against the rare-term singling-out adversary from 0.42 to 0.005.
 
-**4. The synthetic-to-real privacy budget gap.** The safe Laplace-DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest. Per-score Laplace noise is the wrong choice for real cohorts because real similarity-score distributions are compressed; rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response. Privacy-utility claims grounded only in synthetic experiments should be treated as upper bounds on real-world performance.
+**4. The synthetic-to-real privacy budget gap, and a principled fix.** The safe Laplace-DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest. We diagnose the cause as the compression of same-disease similarity-score gaps in real cohorts and propose the iterative exponential mechanism on rank utility as the principled response. Empirically (§4.7), the rank-utility mechanism recovers 90% of non-private nDCG@10 at ε = 5 on the real cohort versus 13% for Laplace at matched ε-DP — a 10× budget efficiency advantage.
 
 **5. GA4GH standards compatibility and open-source release.** Native Phenopackets v2.0, HPO, Beacon v2, and MME adapters. The complete implementation (~4,500 lines of Python) ships with a Dockerfile and Makefile that regenerate every figure and table in ~4 minutes from a clean checkout.
 
@@ -28,7 +28,7 @@ More broadly, this thesis illustrates how privacy-enhancing technologies can exp
 
 The 300 million people living with rare diseases deserve the benefits of collaborative research. Privacy-preserving computation offers a path forward—protecting individual confidentiality while unlocking the collective knowledge distributed across institutions worldwide. This thesis represents one step on that path.
 
-Much work remains. Rank-based DP mechanisms (Report-Noisy-Max, Exponential) need to be evaluated against the same real cohort to determine whether they recover utility at the ε values infeasible for Laplace. Larger and more heterogeneous cohorts — including EHR-derived data which would further stress the synthetic-to-real gap — would refine the privacy-utility curves. Multi-omic extension, malicious-secure cryptographic protocols, and integration with clinical workflows are all essential next steps for translation to practice. We hope this work provides a foundation for these efforts and contributes to the ultimate goal: ending the diagnostic odyssey for rare disease patients everywhere.
+Much work remains. Larger and more heterogeneous cohorts — including EHR-derived data, which would further stress the synthetic-to-real gap — would refine the privacy-utility curves. Multi-omic extension, malicious-secure cryptographic protocols, prospective clinical validation, and integration with clinical workflows are all essential next steps for translation to practice. We hope this work provides a foundation for these efforts and contributes to the ultimate goal: ending the diagnostic odyssey for rare disease patients everywhere.
 
 ---
 

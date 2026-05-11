@@ -54,7 +54,7 @@ This thesis presents a privacy-preserving phenotype matching framework that enab
 
 3. **Empirical privacy measurement.** We implement Yeom-threshold and Shokri-shadow membership-inference attacks against the DP score-release oracle and a singling-out attack against the k-anonymity gate, producing the privacy-utility Pareto curves used to validate the formal invariants. Shadow-model attack ROC AUC drops from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 reduces re-identification probability against the rare-term adversary from 0.42 to 0.005.
 
-4. **The synthetic-to-real DP gap.** We document and explain a 20–50× discrepancy between safe ε on synthetic and real cohorts and identify rank-based mechanisms (Report-Noisy-Max, Exponential) as the principled response. This finding has direct implications for published privacy-utility analyses that rely solely on disease-profile-sampled cohorts.
+4. **The synthetic-to-real DP gap and a measured fix.** We document and explain a 20–50× discrepancy between safe ε on synthetic and real cohorts, propose the iterative exponential mechanism on rank utility as the principled response, and validate it: rank-utility exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 on the real cohort, versus 13% for Laplace at matched ε-DP — a 10× budget efficiency improvement. This finding has direct implications for published privacy-utility analyses that rely solely on disease-profile-sampled cohorts.
 
 5. **GA4GH standards compatibility.** The implementation natively supports GA4GH Phenopackets v2.0, Beacon v2 query semantics, and Matchmaker Exchange message formats, enabling integration with existing federated networks.
 

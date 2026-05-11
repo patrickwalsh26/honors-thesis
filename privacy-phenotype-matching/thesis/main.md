@@ -25,7 +25,7 @@ Rare diseases affect roughly 300 million people worldwide, and the diagnostic od
 
 We formalize a two-party semi-honest threat model with three concrete adversary goals (membership inference, attribute inference, singling-out re-identification) and prove the corresponding privacy invariants for our composition. We evaluate the system on two cohorts: a synthetic cohort sampled from 12,974 OMIM/Orphanet disease profiles, and the Monarch Phenopacket Store (Danis et al., 2025) — 9,588 real published case-report phenopackets with confirmed OMIM diagnoses. On the real cohort, non-private IC-weighted cosine retrieval achieves MRR = 0.87 and nDCG@10 = 0.69, placing the system within the Phenomizer/LIRICAL band. Shadow-model membership-inference attack ROC AUC drops from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 reduces re-identification probability against the rare-term adversary from 0.42 to 0.005.
 
-The most consequential finding concerns deployment: the safe DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest, because real similarity-score distributions are compressed and per-score Laplace noise dominates them. Rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response. Our open-source implementation provides a reusable benchmark, a deployment configuration calibrated against the real-cohort findings, and an interactive pilot system at <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/>.
+The most consequential finding concerns deployment: the safe Laplace-DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest, because real similarity-score distributions are compressed and per-score Laplace noise dominates them. We propose the iterative exponential mechanism on rank utility as the principled response and validate it empirically: it recovers 90% of non-private nDCG@10 at ε = 5 versus 13% for Laplace at matched ε-DP — a 10× budget efficiency improvement. Our open-source implementation provides a reusable benchmark, a deployment configuration calibrated against the real-cohort findings, and an interactive pilot system at <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/>.
 
 **Keywords:** rare diseases, phenotype matching, differential privacy, private set intersection, k-anonymity, Human Phenotype Ontology, GA4GH Phenopackets, membership inference
 
@@ -70,6 +70,7 @@ This research was supported by [funding sources]. Computational resources were p
 - **Figure 11:** k-anonymity ablation: suppression and re-identification probability
 - **Figure 12:** Real-cohort retrieval (Phenopacket Store): privacy-utility curve and Phenomizer-style baseline
 - **Figure 13:** Pilot Streamlit application: clinician-facing demo of the privacy-preserving phenotype matching pipeline
+- **Figure 14:** Rank-based DP recovers retrieval utility on the real cohort: comparison of Laplace, score-utility exponential mechanism, and rank-utility exponential mechanism at matched ε-DP
 
 ---
 

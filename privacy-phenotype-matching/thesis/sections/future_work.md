@@ -51,15 +51,15 @@ Research questions include:
 
 This direction leverages the unique structure of phenotype data that distinguishes it from generic set matching.
 
-### 6.1.6 Rank-Based DP Mechanisms for Real-Cohort Retrieval
+### 6.1.6 Variance-Reduced Rank-Based Mechanisms
 
-The synthetic-to-real DP gap of §5.1.5 — where the safe Laplace budget is 20–50× larger on real patients than synthetic ones — is the most pressing follow-up direction for this thesis. The proposed solution, rank-based DP, is theoretically straightforward but has not been evaluated against the real Phenopacket Store cohort:
+Section §4.7 evaluates iterative exponential mechanism with rank utility and demonstrates 90% recovery of non-private nDCG@10 at ε = 5 — closing the headline synthetic-to-real gap. Two refinements remain open:
 
-- **Report-Noisy-Max (RNM)** (Dwork & Roth, 2014, §3.3) adds Laplace noise to each candidate score and returns the argmax; the noise scale relates to query sensitivity rather than the (compressed) signal range, decoupling protection from real-cohort score statistics.
-- **Exponential mechanism** (McSherry & Talwar, 2007) samples a result with probability proportional to $\exp(\varepsilon \cdot \text{utility} / 2 \Delta_u)$; for top-k retrieval, sequential application gives k-element output under composition.
-- **Permute-and-Flip** (McKenna & Sheldon, 2020) and **GAP-K** (Bassily et al., 2021) provide variance-reduced alternatives for top-k that may further close the synthetic-to-real gap.
+- **Permute-and-Flip** (McKenna & Sheldon, 2020) is a variance-reduced alternative to the exponential mechanism with the same ε-DP guarantee but tighter accuracy bounds, particularly at low ε. On our cohort it would likely shift the rank-utility curve further left toward ε ≤ 1.
+- **One-shot top-k via GAP-K** (Bassily et al., 2021) avoids the iterative ε/k budget split and may admit smaller total ε for the same retrieval quality.
+- **Joint variant**: combine the rank-utility exponential mechanism with the k-anonymity gate of §4.5.2 to characterise their composed behaviour on real cohorts (the synthetic-cohort composition is reported in §4.4.4).
 
-The empirical question is: at what ε do these mechanisms recover ≥80% of non-private nDCG@10 on the Phenopacket Store cohort? A negative result (ε still needs to exceed 10) would argue that the gap is intrinsic to the task rather than the mechanism; a positive result (ε ≈ 1–2 suffices) would deliver the practical deployment configuration our analysis currently leaves open.
+The empirical baseline established by §4.7 makes these refinements directly comparable: each is expected to deliver further budget efficiency at fixed retrieval quality, but their relative ordering on real cohorts has not been measured.
 
 ## 6.2 System Improvements
 

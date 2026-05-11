@@ -339,9 +339,39 @@ Re-running the Laplace ε sweep on the same 1,500-patient cohort reveals a marke
 
 Figure 12 plots the resulting curve. On the synthetic cohort (§4.4.1), ε = 1.0 retained ≥85% of baseline nDCG; on the real cohort, only ε ≥ 50 retains the equivalent fraction. The gap arises because real-patient similarity-score distributions are compressed — between-disease gaps are smaller and more overlapping than in disease-template-sampled patients — so the Laplace noise scale of 1/ε needed to dominate the signal is substantially larger.
 
-This finding has direct deployment implications. Privacy claims based on synthetic-cohort experiments are systematically optimistic: a deployed system targeting the empirical MI-defended regime of ε ≤ 1 (Table 11) would deliver retrieval performance close to random on real patients with this metric. Practical deployment requires either (a) report-noisy-max or exponential-mechanism alternatives whose noise scales with rank rather than score, (b) IC reweighting tuned to compress within-disease score variance, or (c) acceptance of larger ε with stronger k-anonymity to compensate. We return to this in §6.2.
+This finding has direct deployment implications. Privacy claims based on synthetic-cohort experiments are systematically optimistic: a deployed system targeting the empirical MI-defended regime of ε ≤ 1 (Table 11) would deliver retrieval performance close to random on real patients with this metric. The next subsection (§4.7) shows that the rank-based exponential mechanism resolves this gap empirically.
 
-## 4.7 Computational Performance
+## 4.7 Rank-Based Differential Privacy on the Real Cohort
+
+The Laplace results above (§4.6.1) reveal a pathology specific to *score-based* DP: when same-disease similarity-score gaps are compressed into a 0.2–0.3 range, Lap(1/ε) noise dominates the rank-determining signal. Two principled responses exist in the DP literature, both ε-DP for top-k release: the exponential mechanism (McSherry & Talwar, 2007) operating on a utility function, and Report-Noisy-Max (Dwork & Roth, 2014). For exponential-mechanism utility we evaluate two natural choices — the raw similarity score, and the candidate's *rank* in the true ordering — and compare against per-score Laplace at matched ε.
+
+The rank utility is principled here because the rank function has sensitivity 1 under record addition/removal — adding or removing a single patient shifts any other patient's rank by at most 1 — while the rank *gaps* are O(n) by construction (rank 1 vs. rank 100 differ by 99) regardless of how compressed the underlying similarities are. Rank-based selection decouples the noise scale from the score magnitude that score-based mechanisms inherit.
+
+For top-k selection we use the standard iterative composition: ε is split into k rounds of ε/k each, sampling without replacement, yielding ε-DP overall by the composition theorem. The same composition applies to the score-based and rank-based variants.
+
+**Table 15: Three DP top-10 release mechanisms on the Phenopacket Store cohort (1,500 patients, 100 OMIM diseases).** All mechanisms are ε-DP under the same privacy accounting.
+
+| ε | Laplace (per-score) | Exp. mech. (score) | **Exp. mech. (rank)** |
+|---|--------------------|--------------------|-----------------------|
+|     | MRR / nDCG@10     | MRR / nDCG@10      | MRR / nDCG@10           |
+| ∞ (no DP) | 0.869 / 0.689 | 0.869 / 0.689 | 0.869 / 0.689 |
+| 50 | 0.862 / 0.678 | 0.067 / 0.024 | **0.865 / 0.688** |
+| 20 | 0.786 / 0.582 | 0.039 / 0.013 | **0.853 / 0.682** |
+| 10 | 0.551 / 0.342 | 0.037 / 0.012 | **0.834 / 0.667** |
+| 5 | 0.186 / 0.087 | 0.029 / 0.010 | **0.782 / 0.620** |
+| 2 | 0.054 / 0.020 | 0.033 / 0.011 | **0.665 / 0.466** |
+| 1 | 0.033 / 0.012 | 0.029 / 0.010 | **0.544 / 0.333** |
+| 0.5 | 0.032 / 0.011 | 0.034 / 0.011 | **0.396 / 0.199** |
+
+![Three ε-DP top-k release mechanisms on the Phenopacket Store cohort. Rank-based exponential mechanism (green) recovers near-baseline retrieval at ε ≥ 5; per-score Laplace (blue) requires ε ≥ 50 for the same retention; score-based exponential mechanism (orange) collapses because compressed similarity scores yield indistinguishable utilities.](figures/fig14_rank_based_dp.pdf){#fig:rankdp width=95%}
+
+Figure 14 visualizes the gap. Three findings:
+
+- **Rank-based exponential mechanism recovers 90% of baseline nDCG@10 at ε = 5** (0.620 vs. 0.689), and 96% at ε = 10. Per-score Laplace requires ε ≥ 50 for comparable retention, a 10× budget efficiency advantage at matched ε-DP.
+- **Score-based exponential mechanism collapses across the entire sweep.** This confirms the §5.1.5 hypothesis directly: the pathology is the score-utility-magnitude pairing, not the mechanism class. Replacing Laplace with the exponential mechanism without changing the utility function provides no relief.
+- **The MI-defended regime (ε ≤ 1) is now usable.** At ε = 1, where Table 11 reports shadow-model MI attack AUC = 0.50 (random), rank-based selection delivers MRR = 0.544 — a 16× improvement over Laplace MRR = 0.033 at the same ε. The deployment recommendation revised in §5.3.1 reflects this.
+
+## 4.8 Computational Performance
 
 We measured computational overhead for the privacy-preserving pipeline components.
 
@@ -362,7 +392,7 @@ The dominant cost is similarity computation (3.7 ms per query patient), which sc
 
 For a database of 10,000 patients, per-query latency would be approximately 40 seconds for full similarity computation, or 2 minutes with PSI. Approximate methods (locality-sensitive hashing) could reduce this to sub-second latency at the cost of retrieval accuracy.
 
-## 4.8 Summary of Key Findings
+## 4.9 Summary of Key Findings
 
 Our experimental evaluation yields the following principal findings:
 
@@ -378,11 +408,13 @@ Our experimental evaluation yields the following principal findings:
 
 6. **Real-cohort validation places our system in the published literature's range.** On 1,500 real published-case-report patients from 100 OMIM diseases (Phenopacket Store), Cosine-IC retrieval achieves MRR = 0.87 and nDCG@10 = 0.69 — within the 0.7–0.9 MRR band typical of Phenomizer/LIRICAL-class systems. Resnik+BMA over the full HPO DAG is essentially tied with the simpler Cosine-IC.
 
-7. **Synthetic cohorts overestimate the safe DP budget by 1–2 orders of magnitude.** ε = 1 preserves >85% of synthetic-cohort nDCG but only ~2% of real-cohort nDCG; ε ≥ 20 is needed for comparable retention on real patients. Practical deployment cannot rely on synthetic-cohort privacy claims.
+7. **Synthetic cohorts overestimate the safe Laplace-DP budget by 1–2 orders of magnitude.** With per-score Laplace noise, ε = 1 preserves >85% of synthetic-cohort nDCG but only ~2% of real-cohort nDCG; ε ≥ 20 is needed for comparable retention. Practical deployment cannot rely on synthetic-cohort privacy claims for score-based mechanisms.
 
-8. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+8. **Rank-based exponential mechanism closes the gap.** Replacing per-score Laplace with iterative exponential mechanism on rank-utility recovers 90% of non-private nDCG@10 at ε = 5 on the real cohort (vs. 13% for Laplace at matched ε) under the same ε-DP guarantee — a 10× budget efficiency advantage. At ε = 1, where empirical MI attack AUC falls to 0.50 (random), rank-based retrieval achieves MRR = 0.544 (16× over Laplace).
 
-9. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
+9. **Tradeoffs are smooth and configurable.** The privacy-utility frontier allows institutions to select operating points matching their risk tolerance and regulatory requirements.
+
+10. **Computational overhead is practical.** Per-query latency remains under 1 second for databases of 500 patients, with clear paths to scaling via approximation or parallelization.
 
 ---
 

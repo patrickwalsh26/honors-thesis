@@ -36,7 +36,7 @@ No single mechanism is sufficient. PSI protects against server-side phenotype en
 
 The most consequential finding of our real-cohort evaluation is that the safe DP budget is 20–50× larger on real published patients than synthetic-cohort experiments suggest. The mechanism is straightforward: synthetic patients are sampled from a single disease's phenotype profile with 75% recall and 10% noise, producing well-separated similarity-score distributions where same-disease pairs score in the 0.6–0.9 range and different-disease pairs near 0. Real patients exhibit substantial within-disease phenotypic heterogeneity, co-morbidities, and atypical presentations, compressing same-disease scores into the 0.2–0.5 range with substantial overlap against different-disease pairs. A Laplace noise scale of 1/ε that is dwarfed by a 0.6 same-disease score becomes comparable to a 0.3 one, collapsing the rank signal.
 
-This has two implications for the field. First, **published privacy-utility evaluations of rare-disease matching are systematically optimistic** to the extent they rely on disease-profile-sampled cohorts. Reviewers should expect deployment-time ε ≥ 10 even where synthetic-cohort experiments support ε ≤ 1. Second, **per-score Laplace noise is the wrong mechanism for real-cohort retrieval**. Report-Noisy-Max (Dwork & Roth, 2014) and the Exponential Mechanism (McSherry & Talwar, 2007) scale noise to rank rather than score magnitude, decoupling the noise scale from the compressed signal range. Section 5.3.1 revises our deployment recommendation accordingly.
+This has two implications for the field. First, **published privacy-utility evaluations of rare-disease matching are systematically optimistic** to the extent they rely on disease-profile-sampled cohorts. Reviewers should expect deployment-time ε ≥ 10 with per-score Laplace even where synthetic-cohort experiments support ε ≤ 1. Second, **the principled fix is to replace the score utility with a rank utility under the exponential mechanism**. Results §4.7 evaluates this directly and confirms the claim empirically: rank-based exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace) and a usable MRR = 0.544 at ε = 1 (vs. 0.033 for Laplace), with the same ε-DP guarantee. Score-based exponential mechanism, by contrast, suffers the identical compression pathology as Laplace and offers no improvement — confirming that the mechanism *family* matters less than the *utility-function sensitivity-to-signal ratio*. Section 5.3.1 revises our deployment recommendation accordingly.
 
 ## 5.2 Comparison to Related Work
 
@@ -66,9 +66,9 @@ Our deployment recommendations differ from earlier drafts of this work because t
 
 | Parameter | Recommended Value | Rationale |
 |-----------|-------------------|-----------|
-| DP mechanism | Report-Noisy-Max or Exponential | Noise scales with rank rather than score magnitude; tolerates the compressed similarity distribution of real cohorts |
-| ε (per query, Laplace) | 20–50 | If Laplace is mandated, this is the band that retains ≥80% of real-cohort nDCG; not the synthetic-cohort recommendation of 2–5 |
-| ε (per query, RNM/Exp.) | 1–5 (TBD) | Rank-based mechanisms admit smaller ε; precise calibration left to follow-up work |
+| DP mechanism | **Iterative exponential mechanism, rank utility** (§4.7) | Noise tracks rank gaps (always O(n)) rather than compressed score magnitudes. 10× more budget-efficient than Laplace at matched ε-DP on real patients. |
+| ε (per query, rank-exp) | **2–5** | Retains 77–90% of non-private nDCG@10 on the Phenopacket Store cohort. At ε = 1, still delivers MRR = 0.544 — usable for triage if MI-defended privacy is the priority. |
+| ε (per query, Laplace fallback) | ≥ 20 | If a rank-utility implementation is unavailable, Laplace per-score requires ε in this range for comparable retention. Not recommended for new deployments. |
 | k (anonymity) | 5–10 | Re-identification probability ≤ 0.05 at k = 10 against the rare-term singling-out adversary |
 | Rare-term threshold | 1% | Preserves ~98% utility while suppressing extreme outliers |
 | Similarity metric | Cosine-IC | Marginally outperforms Resnik+BMA on the real cohort at lower computational cost |
@@ -183,11 +183,9 @@ Privacy-preserving phenotype matching is technically feasible, but the privacy-u
 
 2. **Empirically measured privacy defense.** Shadow-model MI attack AUC collapses from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 cuts re-identification probability from 0.42 to 0.005. These numbers validate threat-model invariants I2 and I3 (§3.1.2).
 
-3. **The synthetic-to-real privacy budget gap.** Per-score Laplace DP needs ε that is 20–50× larger on real cohorts than synthetic experiments suggest, because real similarity-score distributions are compressed. Rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response.
+3. **The synthetic-to-real privacy budget gap, and the rank-utility fix.** Per-score Laplace DP needs ε that is 20–50× larger on real cohorts than synthetic experiments suggest, because real similarity-score distributions are compressed. Replacing the score utility with a rank utility under the iterative exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace), with the same ε-DP guarantee — closing the gap empirically.
 
-4. **A revised deployment configuration** that respects the gap (§5.3.1): Cosine-IC similarity, RNM/Exponential mechanism preferred over Laplace, k ∈ [5, 10], 1% rare-term filtering.
-
-The most consequential open question for follow-up work is whether the rank-based DP mechanisms recovers utility on real cohorts at small ε — preliminary signs are favourable, but a full evaluation is left to future work.
+4. **A revised deployment configuration** that operationalizes the fix (§5.3.1): Cosine-IC similarity, rank-utility exponential mechanism with ε ∈ [2, 5], k ∈ [5, 10], 1% rare-term filtering.
 
 ---
 
