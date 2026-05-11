@@ -418,6 +418,3 @@ Our experimental evaluation yields the following principal findings:
 
 ---
 
-## References
-
-Köhler, S., Carmody, L., Vasilevsky, N., Jacobsen, J. O. B., Danis, D., Gourdine, J. P., ... & Robinson, P. N. (2019). Expansion of the Human Phenotype Ontology (HPO) knowledge base and resources. *Nucleic Acids Research*, 47(D1), D1018-D1027.

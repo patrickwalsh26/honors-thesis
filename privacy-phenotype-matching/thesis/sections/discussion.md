@@ -142,38 +142,13 @@ Our evaluation has several limitations that contextualize the results:
 
 ## 5.5 Ethical Considerations
 
-### 5.5.1 Balancing Research and Privacy
+Privacy-preserving computation reduces but does not eliminate identification risk; residual risk depends on adversary capabilities that may evolve. Three deployment principles follow from our measured results and apply to any production rollout.
 
-Privacy-preserving phenotype matching navigates a fundamental tension: rare disease research benefits from data sharing, but patients have legitimate privacy interests. Our approach attempts to maximize research utility while providing meaningful protection, but tradeoffs remain.
+**Transparency in consent.** Informed-consent documents must state which mechanisms are used, what each protects against (e.g., membership inference at ε ≤ 1 reduces shadow-model AUC to random, §4.5.1), and what they explicitly do not protect against (out-of-scope threats, §3.1.2). Privacy claims should be calibrated to the real-cohort budget regime (§4.6, §4.7), not the more optimistic synthetic-cohort numbers historically reported in the literature.
 
-Strong privacy protection (low ε) reduces the information available to researchers, potentially slowing discovery. Weak protection (high ε) may expose patients to identification risks. There is no universally correct balance—appropriate parameters depend on disease sensitivity, patient preferences, and research context.
+**Patient agency.** Patients should be able to opt in or out at any time, with matching against their record disabled on withdrawal; receive optional notification when their record contributes to a successful match; and benefit from discoveries enabled by their data through equitable governance arrangements (Ramoni et al., 2017). The per-session privacy accountant we expose in the pilot (§3.8) is a foundation for the institutional-budget machinery these guarantees require.
 
-We advocate for transparent communication with patients about privacy mechanisms and their limitations. Informed consent should explain that privacy-preserving computation reduces but does not eliminate identification risk, and that residual risk depends on adversary capabilities that may evolve.
-
-### 5.5.2 Equity Considerations
-
-Privacy-preserving systems could exacerbate or ameliorate health equity disparities:
-
-**Potential benefits.** Privacy protection may enable participation by institutions serving underrepresented populations who are particularly sensitive to data sharing. Broader participation improves research diversity.
-
-**Potential risks.** Complex privacy mechanisms may be deployed primarily at well-resourced institutions, creating a two-tier system. Computational overhead may disadvantage institutions with limited infrastructure.
-
-**Mitigation.** Open-source implementation, clear documentation, and cloud deployment options can lower adoption barriers. International collaboration should consider resource disparities across settings.
-
-### 5.5.3 Secondary Use Limitations
-
-Our framework is designed for patient matching, not broader surveillance or commercial profiling. Technical controls (query rate limiting, audit logging) and governance policies should prevent misuse. Terms of service for federated networks should prohibit secondary uses inconsistent with research purposes.
-
-### 5.5.4 Patient Agency
-
-Patients should retain agency over their participation in matching systems:
-
-- **Informed consent**: Clear explanation of matching purpose, privacy mechanisms, and residual risks
-- **Opt-out rights**: Ability to withdraw at any time, with matching against their data disabled
-- **Result notification**: Option to be informed when their data contributes to a match
-- **Benefit sharing**: Consideration of how patients benefit from discoveries enabled by their data
-
-These principles align with emerging frameworks for patient-centered genomics research (Ramoni et al., 2017) and should guide deployment policies.
+**Equitable adoption.** Complex privacy mechanisms deployed only at well-resourced institutions risk creating a two-tier system in which underrepresented populations contribute disproportionately less to the rare-disease cohort. Open-source release, low-friction reproducibility (`make reproduce`, §3.7), and turn-key cloud deployment (§3.8) lower the barrier; institutional matching networks should explicitly fund participation by lower-resource sites. Secondary use beyond matching — commercial profiling, surveillance — must be excluded by governance policy rather than technical controls alone.
 
 ## 5.6 Summary
 
@@ -189,24 +164,3 @@ Privacy-preserving phenotype matching is technically feasible, but the privacy-u
 
 ---
 
-## References
-
-Ayday, E., De Cristofaro, E., Hubaux, J. P., & Tsudik, G. (2013). Whole Genome Sequencing: Revolutionary Medicine or Privacy Nightmare? *IEEE Computer*, 46(2), 58-66.
-
-Chen, F., Wang, S., Jiang, X., et al. (2019). PRINCESS: Privacy-Protecting Rare Disease International Network Collaboration via Encryption through Software Guard Extensions. *Bioinformatics*, 35(5), 871-878.
-
-El Emam, K., Jonker, E., Arbuckle, L., & Malin, B. (2011). A Systematic Review of Re-Identification Attacks on Health Data. *PLoS ONE*, 6(12), e28071.
-
-Frésard, L., Smail, C., Ferraro, N. M., et al. (2019). Identification of Rare-Disease Genes Using Blood Transcriptome Sequencing and Large Control Cohorts. *Nature Medicine*, 25(6), 911-919.
-
-GTEx Consortium, et al. (2017). The Impact of Rare Variation on Gene Expression Across Tissues. *Nature*, 550(7675), 239-243.
-
-Köhler, S., Schulz, M. H., Krawitz, P., et al. (2009). Clinical Diagnostics in Human Genetics with Semantic Similarity Searches in Ontologies. *American Journal of Human Genetics*, 85(4), 457-464.
-
-Pesquita, C., Faria, D., Falcão, A. O., Lord, P., & Couto, F. M. (2009). Semantic Similarity in Biomedical Ontologies. *PLoS Computational Biology*, 5(7), e1000443.
-
-Raisaro, J. L., Tramèr, F., Ji, Z., et al. (2017). Addressing Beacon Re-Identification Attacks: Quantification and Mitigation of Privacy Risks. *JAMIA*, 24(4), 799-805.
-
-Ramoni, R. B., Mulvihill, J. J., Adams, D. R., et al. (2017). The Undiagnosed Diseases Network: Accelerating Discovery about Health and Disease. *American Journal of Human Genetics*, 100(2), 185-192.
-
-Shringarpure, S. S., & Bustamante, C. D. (2015). Privacy Risks from Genomic Data-Sharing Beacons. *American Journal of Human Genetics*, 97(5), 631-646.
