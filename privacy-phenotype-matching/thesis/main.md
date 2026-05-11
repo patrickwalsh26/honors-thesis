@@ -69,6 +69,7 @@ This research was supported by [funding sources]. Computational resources were p
 - **Figure 10:** Empirical MI attack AUC vs. ε (threshold and shadow-model attackers)
 - **Figure 11:** k-anonymity ablation: suppression and re-identification probability
 - **Figure 12:** Real-cohort retrieval (Phenopacket Store): privacy-utility curve and Phenomizer-style baseline
+- **Figure 13:** Pilot Streamlit application: clinician-facing demo of the privacy-preserving phenotype matching pipeline
 
 ---
 

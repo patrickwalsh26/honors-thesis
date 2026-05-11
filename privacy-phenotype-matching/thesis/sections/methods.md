@@ -346,6 +346,10 @@ We generated synthetic patient cohorts by sampling from real disease phenotype p
 
 The resulting cohort exhibits phenotype distributions consistent with real rare disease patients, with each patient having 3-24 observed phenotypes (median: 9).
 
+### 3.6.3 External Real-Patient Cohort
+
+For external validation (Results §4.6) we use the Monarch Phenopacket Store release 0.1.26 (Danis et al., 2025), a curated corpus of 9,588 GA4GH Phenopackets v2 derived from published case reports, each with a confirmed OMIM disease diagnosis and PMID provenance. We filter to patients with $\geq 3$ observed phenotypes from diseases with $\geq 2$ documented patients (8,343 patients, 586 diseases) and construct a balanced subsample of the 100 most-populated diseases capped at 15 patients each (1,500 patients) for tractable all-vs-all retrieval. No identifiable patient data leaves the corpus: PMIDs are publication references, and the pilot system (§3.8) further replaces them with anonymous indices.
+
 ## 3.7 Implementation
 
 We implemented the privacy-preserving phenotype matching framework in Python 3.10. The system comprises approximately 4,500 lines of code organized into modular components.
@@ -370,7 +374,17 @@ We implemented the privacy-preserving phenotype matching framework in Python 3.1
 - DP noise addition: O(1) per score
 - Overall query processing: O(n · m) for ranking against *n* database patients
 
-The complete implementation, evaluation scripts, and synthetic datasets are available at [repository URL] under an open-source license.
+The complete implementation, evaluation scripts, and synthetic datasets are available at [repository URL] under an open-source license. A `Dockerfile` and `Makefile` reproduce every figure and result table reported in this thesis (`make reproduce`, ≈4 minutes wall time) from a clean checkout.
+
+## 3.8 Reference Implementation: Pilot System
+
+To demonstrate the framework's behavior interactively, we built a single-page web application (`app/streamlit_app.py`, Streamlit, ≈250 lines) that exposes the three-mechanism privacy composition to a clinician end user. The pilot loads a self-contained 1,500-patient cohort drawn from the Phenopacket Store (§3.6.3), accepts an HPO-term query, and applies the same rare-term filter, Laplace-DP score release, and k-anonymity gate as the batch evaluation pipeline. A per-session privacy accountant (§3.4.2) tracks cumulative ε across queries and is displayed in the sidebar; a "privacy trace" panel reveals which terms were rare-filtered and whether the gate suppressed the response, making the otherwise-invisible privacy machinery legible to the user.
+
+The pilot omits the cryptographic Private Set Intersection layer because PSI's contribution is invisible to a single-user demonstration — the released similarity scores carry the same DP and k-anonymity guarantees regardless of whether the underlying overlap computation was protected by PSI. A production federated deployment would route the score computation through the two-party PSI protocol of §3.4.1; the user-facing behavior of the pilot is unchanged.
+
+Figure 13 shows the running application. The system is deployed publicly via Streamlit Community Cloud and links from the project repository.
+
+![Pilot system after one query (ε = 5, k = 5, rare-term threshold 0.01). Sidebar shows privacy controls and the per-session ε budget (5.00 spent after one query). The result table reports the top-5 ranked patients with their DP-noised similarity scores, OMIM disease labels, and the count of shared phenotypes after rare-term filtering. The expanded privacy trace details each mechanism's effect.](figures/fig13_pilot_app_screenshot.png){#fig:pilot width=95%}
 
 ---
 

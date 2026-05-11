@@ -201,15 +201,15 @@ def main():
         )
         top_k = st.select_slider("Top-k results", options=[3, 5, 10], value=5)
 
-        # session privacy budget tracker
+        # session privacy budget tracker — render lazily so it reflects the
+        # increment that happens after the search button is clicked.
         if "spent" not in st.session_state:
             st.session_state.spent = 0.0
             st.session_state.queries = 0
         st.markdown("---")
         st.subheader("Session privacy budget")
-        eps_display = "—" if not math.isfinite(epsilon) else f"{st.session_state.spent:.2f}"
-        st.metric("Cumulative ε spent", eps_display)
-        st.caption(f"{st.session_state.queries} query(s) this session")
+        budget_metric = st.empty()
+        budget_caption = st.empty()
         if st.button("Reset session"):
             st.session_state.spent = 0.0
             st.session_state.queries = 0
@@ -246,11 +246,16 @@ def main():
 
     run_clicked = st.button("Search reference cohort", type="primary", disabled=not query_terms)
     if not run_clicked:
+        # still render the budget so user sees current totals
+        budget_metric.metric("Cumulative ε spent", f"{st.session_state.spent:.2f}")
+        budget_caption.caption(f"{st.session_state.queries} query(s) this session")
         st.stop()
 
     if math.isfinite(epsilon):
         st.session_state.spent += epsilon
     st.session_state.queries += 1
+    budget_metric.metric("Cumulative ε spent", f"{st.session_state.spent:.2f}")
+    budget_caption.caption(f"{st.session_state.queries} query(s) this session")
 
     result = run_query(
         query_terms, cohort, ic, counts,
