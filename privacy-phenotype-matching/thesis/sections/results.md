@@ -258,7 +258,7 @@ Following the membership-inference (MI) literature, we evaluate two attackers ag
 
 We sweep $\varepsilon \in \{0.1, 0.5, 1.0, 2.0, 5.0, 10.0, +\infty\}$, where $\varepsilon = +\infty$ denotes the non-private baseline. The 500-patient HPOA cohort is split 50/50 into members and non-members.
 
-**Table 11: Membership-inference attack ROC AUC vs. DP budget.** Higher AUC = stronger attack. AUC = 0.5 is random guessing.
+**Table 13: Membership-inference attack ROC AUC vs. DP budget.** Higher AUC = stronger attack. AUC = 0.5 is random guessing.
 
 | ε | Threshold attack AUC | Shadow-model attack AUC | Defender advantage* |
 |---|---------------------|--------------------------|---------------------|
@@ -286,7 +286,7 @@ The DP analysis above protects against membership inference but does not by itse
 
 We enumerated every HPO term in the cohort with cohort prevalence $1 \leq |S_t| \leq 50$ (1,142 terms; median $|S_t| = 4$, max $|S_t| = 46$), and measured the expected re-identification probability $\Pr_{\text{re-id}} = \mathbb{E}_t [\mathbb{1}\{|S_t| \geq k\} / |S_t|]$ across that distribution.
 
-**Table 12: k-anonymity ablation against rare-term singling-out (n = 1,142 rare terms).**
+**Table 14: k-anonymity ablation against rare-term singling-out (n = 1,142 rare terms).**
 
 | k | Suppression rate | Re-id probability (post-gate) | Singling-out rate (post-gate) | Mean released cohort size |
 |---|-----------------|-------------------------------|-------------------------------|---------------------------|
@@ -309,7 +309,7 @@ The retrieval results in §4.2–4.4 use a synthetic cohort sampled from HPOA di
 
 After filtering for patients with ≥3 observed phenotypes from diseases with ≥2 documented patients, the cohort contains 8,343 real patients across 586 OMIM diseases. For tractable all-vs-all retrieval we constructed a balanced subsample of the 100 most-populated diseases capped at 15 patients each, yielding 1,500 patients for the experiments below.
 
-**Table 13: Retrieval performance on real published cohort (Phenopacket Store).** Best published rare-disease semantic-similarity systems (Phenomizer, LIRICAL) typically report MRR in the 0.7–0.9 range on similar tasks (Köhler et al., 2009; Robinson et al., 2020), placing our system within the established literature.
+**Table 15: Retrieval performance on real published cohort (Phenopacket Store).** Best published rare-disease semantic-similarity systems (Phenomizer, LIRICAL) typically report MRR in the 0.7–0.9 range on similar tasks (Köhler et al., 2009; Robinson et al., 2020), placing our system within the established literature.
 
 | System | MRR | nDCG@10 | Recall@5 | P@1 |
 |--------|-----|---------|----------|-----|
@@ -322,7 +322,7 @@ Two findings are notable: (i) absolute retrieval performance drops by roughly 30
 
 Re-running the Laplace ε sweep on the same 1,500-patient cohort reveals a markedly steeper privacy-utility curve than the synthetic-cohort analysis of §4.4.1 suggested.
 
-**Table 14: Cosine-IC retrieval under the Laplace mechanism (Phenopacket Store cohort).**
+**Table 16: Cosine-IC retrieval under the Laplace mechanism (Phenopacket Store cohort).**
 
 | ε | MRR | nDCG@10 | Recall@5 | P@1 |
 |---|-----|---------|----------|-----|
@@ -339,7 +339,7 @@ Re-running the Laplace ε sweep on the same 1,500-patient cohort reveals a marke
 
 Figure 12 plots the resulting curve. On the synthetic cohort (§4.4.1), ε = 1.0 retained ≥85% of baseline nDCG; on the real cohort, only ε ≥ 50 retains the equivalent fraction. The gap arises because real-patient similarity-score distributions are compressed — between-disease gaps are smaller and more overlapping than in disease-template-sampled patients — so the Laplace noise scale of 1/ε needed to dominate the signal is substantially larger.
 
-This finding has direct deployment implications. Privacy claims based on synthetic-cohort experiments are systematically optimistic: a deployed system targeting the empirical MI-defended regime of ε ≤ 1 (Table 11) would deliver retrieval performance close to random on real patients with this metric. The next subsection (§4.7) shows that the rank-based exponential mechanism resolves this gap empirically.
+This finding has direct deployment implications. Privacy claims based on synthetic-cohort experiments are systematically optimistic: a deployed system targeting the empirical MI-defended regime of ε ≤ 1 (Table 13) would deliver retrieval performance close to random on real patients with this metric. The next subsection (§4.7) shows that the rank-based exponential mechanism resolves this gap empirically.
 
 ## 4.7 Rank-Based Differential Privacy on the Real Cohort
 
@@ -349,7 +349,7 @@ The rank utility is principled here because the rank function has sensitivity 1 
 
 For top-k selection we use the standard iterative composition: ε is split into k rounds of ε/k each, sampling without replacement, yielding ε-DP overall by the composition theorem. The same composition applies to the score-based and rank-based variants.
 
-**Table 15: Three DP top-10 release mechanisms on the Phenopacket Store cohort (1,500 patients, 100 OMIM diseases).** All mechanisms are ε-DP under the same privacy accounting.
+**Table 17: Three DP top-10 release mechanisms on the Phenopacket Store cohort (1,500 patients, 100 OMIM diseases).** All mechanisms are ε-DP under the same privacy accounting.
 
 | ε | Laplace (per-score) | Exp. mech. (score) | **Exp. mech. (rank)** |
 |---|--------------------|--------------------|-----------------------|
@@ -369,13 +369,13 @@ Figure 14 visualizes the gap. Three findings:
 
 - **Rank-based exponential mechanism recovers 90% of baseline nDCG@10 at ε = 5** (0.620 vs. 0.689), and 96% at ε = 10. Per-score Laplace requires ε ≥ 50 for comparable retention, a 10× budget efficiency advantage at matched ε-DP.
 - **Score-based exponential mechanism collapses across the entire sweep.** This confirms the §5.1.5 hypothesis directly: the pathology is the score-utility-magnitude pairing, not the mechanism class. Replacing Laplace with the exponential mechanism without changing the utility function provides no relief.
-- **The MI-defended regime (ε ≤ 1) is now usable.** At ε = 1, where Table 11 reports shadow-model MI attack AUC = 0.50 (random), rank-based selection delivers MRR = 0.544 — a 16× improvement over Laplace MRR = 0.033 at the same ε. The deployment recommendation revised in §5.3.1 reflects this.
+- **The MI-defended regime (ε ≤ 1) is now usable.** At ε = 1, where Table 13 reports shadow-model MI attack AUC = 0.50 (random), rank-based selection delivers MRR = 0.544 — a 16× improvement over Laplace MRR = 0.033 at the same ε. The deployment recommendation revised in §5.3.1 reflects this.
 
 ## 4.8 Computational Performance
 
 We measured computational overhead for the privacy-preserving pipeline components.
 
-**Table 13: Computational Overhead**
+**Table 18: Computational Overhead**
 
 | Operation | Time (ms) | Notes |
 |-----------|-----------|-------|

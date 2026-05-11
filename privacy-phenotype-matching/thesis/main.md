@@ -76,12 +76,18 @@ This research was supported by [funding sources]. Computational resources were p
 
 ## List of Tables
 
-- **Table 1:** Rare disease statistics
-- **Table 2:** HPO annotations dataset summary
-- **Table 3:** Evaluation cohort characteristics
-- **Table 4:** Baseline retrieval performance
-- **Table 5:** Privacy mechanism comparison
-- **Table 6:** Computational overhead analysis
+- **Table 1:** HPO Annotations Corpus Summary
+- **Table 2:** Evaluation Cohort Characteristics
+- **Table 3:** Per-step disclosure to a semi-honest adversary (Methods §3.1.2)
+- **Tables 1–4 (Results):** Cohort statistics and example phenotypes
+- **Tables 5–8:** Baseline retrieval performance and similarity distributions
+- **Tables 9–12:** Synthetic-cohort privacy-utility tradeoffs (DP, k-anonymity, rare-term, composition)
+- **Table 13:** Membership-inference attack ROC AUC vs. ε
+- **Table 14:** k-anonymity ablation against rare-term singling-out
+- **Table 15:** Retrieval on the real Phenopacket Store cohort
+- **Table 16:** Cosine-IC retrieval under Laplace DP on the real cohort
+- **Table 17:** Three ε-DP top-k release mechanisms (Laplace, score-exp, rank-exp)
+- **Table 18:** Computational overhead
 
 ---
 
