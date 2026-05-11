@@ -272,6 +272,8 @@ We sweep $\varepsilon \in \{0.1, 0.5, 1.0, 2.0, 5.0, 10.0, +\infty\}$, where $\v
 
 \*Defender advantage = (AUC$_{\varepsilon=\infty}$ − AUC$_{\varepsilon}$), averaged over both attackers.
 
+![Membership-inference attack ROC AUC vs.\ Laplace privacy budget on the synthetic HPOA cohort. Both attackers collapse to random guessing at $\varepsilon \leq 2.0$.](figures/fig10_mia_pareto.pdf){#fig:mia width=85%}
+
 Figure 10 plots the privacy-utility frontier. Three regimes are apparent: (i) **practical privacy** at $\varepsilon \leq 2.0$, where both attackers are reduced to random guessing despite full transcript access; (ii) a **transition band** at $2.0 < \varepsilon < 10.0$, where the shadow-model attacker recovers signal faster than the simple threshold attacker; and (iii) a **vulnerable** regime at $\varepsilon \geq 10.0$, where AUC exceeds 0.88 — DP at this budget should be regarded as non-protective in this deployment. The shadow-model attacker uniformly dominates the threshold attacker in the transition regime, illustrating that simple-score thresholds underestimate the adversary capability available to a real attacker.
 
 Crucially, the regime where DP successfully defends against MI ($\varepsilon \leq 2.0$) overlaps with the regime where retrieval utility remains usable (nDCG@10 = 0.928 at $\varepsilon = 2.0$ per §4.4.1). This is the central operating-point claim of the thesis: $\varepsilon \approx 1$–$2$ simultaneously delivers strong empirical MI resistance and acceptable retrieval performance.
@@ -294,6 +296,8 @@ We enumerated every HPO term in the cohort with cohort prevalence $1 \leq |S_t| 
 | 10 | 0.926 | 0.005 | 0.000 | 15.5 |
 | 20 | 0.988 | 0.0005 | 0.000 | 26.9 |
 | 50 | 1.000 | 0.000 | 0.000 | — |
+
+![k-anonymity ablation on rare HPO-term singling-out. (a) Suppression rate vs.\ k. (b) Expected re-identification probability post-gate vs.\ k; horizontal dashed line is the unprotected baseline.](figures/fig11_kanon_ablation.pdf){#fig:kanon width=92%}
 
 Figure 11 visualizes both axes of the tradeoff: suppression rate climbs steeply between $k = 2$ and $k = 10$ (22% → 93%), while re-identification probability collapses by nearly three orders of magnitude (0.419 → 0.005). Crucially, even at $k = 2$ the singling-out rate drops to 0 — every rare term that originally identified a unique patient is now blocked. The persistent re-id probability at $k = 2$ (19.5%) comes entirely from queries that *are* released ($|S_t| \geq 2$), where the attacker still benefits from small cohort sizes; this is the gap that **rare-term filtering** (§4.4.3) closes by suppressing the query before it ever reaches the gate.
 
@@ -330,6 +334,8 @@ Re-running the Laplace ε sweep on the same 1,500-patient cohort reveals a marke
 | 2 | 0.055 | 0.020 | 0.021 | 0.022 |
 | 1 | 0.034 | 0.012 | 0.012 | 0.011 |
 | 0.5 | 0.028 | 0.010 | 0.010 | 0.010 |
+
+![Retrieval performance on the Monarch Phenopacket Store cohort (1,500 real published-case-report patients across 100 OMIM diseases). Cosine-IC nDCG@10 and MRR fall sharply for $\varepsilon < 20$; the dotted line marks the Resnik+BMA Phenomizer-style non-private baseline.](figures/fig12_phenopacket_benchmark.pdf){#fig:ppstore width=85%}
 
 Figure 12 plots the resulting curve. On the synthetic cohort (§4.4.1), ε = 1.0 retained ≥85% of baseline nDCG; on the real cohort, only ε ≥ 50 retains the equivalent fraction. The gap arises because real-patient similarity-score distributions are compressed — between-disease gaps are smaller and more overlapping than in disease-template-sampled patients — so the Laplace noise scale of 1/ε needed to dominate the signal is substantially larger.
 

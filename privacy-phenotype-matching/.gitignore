@@ -51,6 +51,9 @@ data/mimic/
 data/starr/
 data/phenopacket_store/
 
+# Unpacked Overleaf bundle directories (the zip is the canonical deliverable)
+thesis/output/*_overleaf/
+
 # Keep example/test data
 !data/synthetic/example_*.json
 !data/synthetic/test_*.json
