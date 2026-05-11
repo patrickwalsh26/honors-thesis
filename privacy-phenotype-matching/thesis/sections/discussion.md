@@ -6,11 +6,9 @@ This chapter interprets our experimental findings, situates them within the broa
 
 ### 5.1.1 Effectiveness of Phenotype-Based Retrieval
 
-Our baseline evaluation demonstrates that phenotype similarity effectively identifies patients with shared disease etiology. The near-perfect retrieval performance (nDCG@10 = 99.7%, MRR = 1.000 for Resnik similarity) validates the fundamental premise underlying systems like Matchmaker Exchange: patients with similar phenotypes often share similar diagnoses.
+The synthetic-cohort baseline achieves nDCG@10 = 0.997 (Resnik, IC-weighted), validating the premise of phenotype-based matching: patients with the same disease consistently share enough HPO terms to be retrieved together. On the real published-cohort benchmark (§4.6), Cosine-IC achieves MRR = 0.87 and nDCG@10 = 0.69 — within the 0.7–0.9 MRR band reported by Phenomizer and LIRICAL on comparable tasks (Köhler et al., 2009; Robinson et al., 2020). The synthetic-cohort numbers reflect what is achievable when phenotype profiles match disease templates faithfully; the real-cohort numbers reflect the genuine noise of published clinical phenotyping (atypical presentations, incomplete documentation, and inter-curator variability).
 
-This strong performance reflects several factors. First, our evaluation cohort was constructed from real disease-phenotype associations in the HPO annotation corpus, ensuring that patients with the same underlying disease exhibit substantial phenotypic overlap. Second, the balanced cohort design (5 patients per disease) provides clear ground truth and sufficient relevant patients for each query. Third, the relatively modest noise rate (10%) and high phenotype recall (75%) simulate incomplete but reasonably accurate phenotyping.
-
-The consistent advantage of IC-weighted metrics (Resnik, Cosine-IC) over unweighted alternatives confirms findings from prior work (Köhler et al., 2009; Pesquita et al., 2009). Rare phenotypes carry greater diagnostic information, and weighting by information content appropriately emphasizes these discriminative features. For rare disease matching, where distinctive phenotypes often hold the key to diagnosis, this weighting is particularly valuable.
+The consistent advantage of IC-weighted metrics over unweighted alternatives confirms prior work (Köhler et al., 2009; Pesquita et al., 2009). More surprising is that Cosine-IC marginally outperforms full Resnik+BMA over the HPO DAG on the real cohort (MRR 0.87 vs. 0.83): when corpus-IC priors capture enough of the term-discrimination signal, ontology-traversal cost buys little additional accuracy. This argues for the simpler metric in deployment.
 
 ### 5.1.2 Sparsity and Its Implications
 
@@ -22,30 +20,23 @@ Our privacy mechanisms address this concern through multiple layers. Differentia
 
 ### 5.1.3 Privacy-Utility Tradeoffs
 
-Our systematic evaluation of privacy mechanisms reveals smooth, predictable tradeoffs between protection strength and retrieval utility.
+The DP results depend critically on the evaluation cohort. On the synthetic cohort, utility degrades gracefully: at ε = 5.0, nDCG@10 falls only 2.1% from baseline; at ε = 1.0, the 10.5% loss is tolerable. On the real Phenopacket Store cohort, the same ε values are essentially unusable — ε = 1 retains only ~2% of baseline nDCG, and ε ≥ 20 is needed to retain 80% of baseline. §5.1.5 develops why this gap exists and what it implies.
 
-**Differential Privacy.** The DP results align with theoretical expectations: utility degrades gracefully as ε decreases. At ε = 5.0, nDCG@10 drops only 2.1% from baseline—a modest cost for meaningful privacy guarantees. At ε = 1.0, commonly considered a reasonable privacy threshold, the 10.5% degradation remains acceptable for many applications. The steep decline below ε = 0.5 (>17% utility loss) suggests diminishing returns for very strong privacy.
+The empirical membership-inference experiment (Table 11) shows that the DP guarantee delivers its claimed protection: shadow-model attack AUC drops from 0.98 (no DP) to 0.50 (random guessing) at ε ≤ 1. The MI defense is real and quantifiable. What changes between cohorts is the *utility cost* of that defense, not the privacy guarantee.
 
-These findings inform practical deployment. For internal institutional use where privacy concerns are moderate, ε = 5–10 provides strong utility with some protection. For federated queries across institutions with stricter requirements, ε = 1–2 balances protection and utility. Very strong privacy (ε < 0.5) may be appropriate for highly sensitive populations but significantly impacts clinical utility.
+The k-anonymity ablation (Table 12) shows that suppression-based protection is comparatively cheap: re-identification probability against the rare-term singling-out adversary drops three orders of magnitude (0.42 → 0.005) between k = 1 and k = 10, with all unique-patient queries already blocked at k = 2. Composing k-anonymity with moderate DP (ε in the 10–20 range, given the real-cohort findings) provides defense in depth without the catastrophic utility collapse of low-ε DP alone.
 
-**K-Anonymity.** The k-anonymity results demonstrate that suppression-based protection imposes modest availability costs without degrading result quality. At k = 5, no queries are suppressed in our balanced cohort. At k = 10–20, suppression rates remain below 10%. Critically, non-suppressed queries maintain full retrieval precision.
-
-This pattern suggests that k-anonymity is well-suited as a complementary mechanism—it protects against rare-cohort inference without the pervasive noise of differential privacy. The combination provides defense in depth: DP protects all queries, while k-anonymity adds specific protection for edge cases.
-
-**Rare Term Filtering.** The filtering results reveal a sharper tradeoff. Conservative filtering (1% prevalence threshold) removes many rare terms while preserving 98.4% utility. Aggressive filtering (10% threshold) substantially degrades performance (nDCG@10 = 0.847) by eliminating diagnostically informative phenotypes.
-
-This tradeoff reflects the fundamental tension in phenotype-based matching: rare phenotypes are both the most identifying (privacy risk) and the most diagnostic (utility). Aggressive rare term filtering throws away precisely the information that makes phenotype matching valuable. Conservative filtering offers a reasonable compromise, removing only extremely rare quasi-identifiers while preserving distinctive but moderately common phenotypes.
+Rare-term filtering exhibits the sharpest internal tradeoff. A 1% prevalence threshold preserves 98% of utility while suppressing extreme outliers; a 10% threshold removes diagnostic terms and drops nDCG@10 to 0.847. Rare phenotypes are simultaneously the most identifying and the most diagnostic — filtering at the high-prevalence tail wastes the signal that makes phenotype matching valuable.
 
 ### 5.1.4 Mechanism Composition
 
-The combined mechanism evaluation demonstrates that layered privacy is practical. With ε = 5.0, k = 5, and 1% rare term filtering, our system achieves 96.5% of baseline utility while providing:
+No single mechanism is sufficient. PSI protects against server-side phenotype enumeration; DP bounds output leakage; k-anonymity prevents singling-out; rare-term filtering removes quasi-identifiers before computation. The §4.4.4 composed configuration (ε = 5, k = 5, 1% filter) preserves 96.5% of synthetic-cohort utility, but the synthetic-to-real gap (§5.1.5) means deployment configurations should re-tune ε upward on real-population data.
 
-1. **Cryptographic protection** via PSI (phenotype sets never revealed in cleartext)
-2. **Statistical protection** via DP (bounded information leakage)
-3. **Syntactic protection** via k-anonymity (minimum cohort size)
-4. **Quasi-identifier reduction** via rare term filtering
+### 5.1.5 The Synthetic-to-Real Generalization Gap
 
-No single mechanism provides complete protection, but their composition addresses complementary threat vectors. PSI protects against server-side phenotype enumeration. DP bounds what any adversary can learn from outputs. K-anonymity prevents inference about small groups. Rare term filtering removes uniquely identifying combinations.
+The most consequential finding of our real-cohort evaluation is that the safe DP budget is 20–50× larger on real published patients than synthetic-cohort experiments suggest. The mechanism is straightforward: synthetic patients are sampled from a single disease's phenotype profile with 75% recall and 10% noise, producing well-separated similarity-score distributions where same-disease pairs score in the 0.6–0.9 range and different-disease pairs near 0. Real patients exhibit substantial within-disease phenotypic heterogeneity, co-morbidities, and atypical presentations, compressing same-disease scores into the 0.2–0.5 range with substantial overlap against different-disease pairs. A Laplace noise scale of 1/ε that is dwarfed by a 0.6 same-disease score becomes comparable to a 0.3 one, collapsing the rank signal.
+
+This has two implications for the field. First, **published privacy-utility evaluations of rare-disease matching are systematically optimistic** to the extent they rely on disease-profile-sampled cohorts. Reviewers should expect deployment-time ε ≥ 10 even where synthetic-cohort experiments support ε ≤ 1. Second, **per-score Laplace noise is the wrong mechanism for real-cohort retrieval**. Report-Noisy-Max (Dwork & Roth, 2014) and the Exponential Mechanism (McSherry & Talwar, 2007) scale noise to rank rather than score magnitude, decoupling the noise scale from the compressed signal range. Section 5.3.1 revises our deployment recommendation accordingly.
 
 ## 5.2 Comparison to Related Work
 
@@ -71,16 +62,18 @@ The Montgomery Lab's work on rare variant expression (GTEx Consortium et al., 20
 
 ### 5.3.1 Parameter Selection
 
-Based on our evaluation, we recommend the following default parameters for practical deployment:
+Our deployment recommendations differ from earlier drafts of this work because the real-cohort evaluation revealed the synthetic-to-real gap of §5.1.5. The values below are calibrated against the Phenopacket Store benchmark (§4.6), not the synthetic cohort.
 
 | Parameter | Recommended Value | Rationale |
 |-----------|-------------------|-----------|
-| ε (DP) | 2.0–5.0 | Balances privacy and utility; 5.0 for internal use, 2.0 for federation |
-| k (anonymity) | 5 | Prevents small-cohort inference without excessive suppression |
-| Rare term threshold | 1% | Removes extreme outliers while preserving diagnostic terms |
-| Similarity metric | Resnik (simplified) | Best empirical performance with IC weighting |
+| DP mechanism | Report-Noisy-Max or Exponential | Noise scales with rank rather than score magnitude; tolerates the compressed similarity distribution of real cohorts |
+| ε (per query, Laplace) | 20–50 | If Laplace is mandated, this is the band that retains ≥80% of real-cohort nDCG; not the synthetic-cohort recommendation of 2–5 |
+| ε (per query, RNM/Exp.) | 1–5 (TBD) | Rank-based mechanisms admit smaller ε; precise calibration left to follow-up work |
+| k (anonymity) | 5–10 | Re-identification probability ≤ 0.05 at k = 10 against the rare-term singling-out adversary |
+| Rare-term threshold | 1% | Preserves ~98% utility while suppressing extreme outliers |
+| Similarity metric | Cosine-IC | Marginally outperforms Resnik+BMA on the real cohort at lower computational cost |
 
-These parameters achieve ~93–97% baseline utility while providing meaningful protection. Institutions can adjust based on their specific privacy requirements, regulatory constraints, and patient population characteristics.
+The empirical MI defense (§4.5.1) is unchanged: the DP guarantee still bounds attack AUC, regardless of ε's utility cost. Institutions choosing Laplace at ε = 20 obtain the same theoretical (ε, 0)-DP guarantee they would obtain at ε = 1 — they simply accept a weaker formal bound in exchange for usable retrieval. Whether ε = 20 constitutes "meaningful" privacy is a deployment-level judgment that compositions across many queries (§3.4.4 accountant) make tighter than the per-query value suggests.
 
 ### 5.3.2 Privacy Budget Management
 
@@ -123,13 +116,13 @@ We recommend institutional consultation with compliance officers, as specific re
 
 Our evaluation has several limitations that contextualize the results:
 
-**Synthetic patients.** We evaluated on synthetic patients generated from real disease profiles rather than actual patient records. While this approach produces realistic phenotype distributions and enables reproducible evaluation, it may not capture all complexities of clinical phenotyping—including phenotype evolution over time, phenotypic heterogeneity within diseases, and annotation inconsistencies across institutions.
+**Real-cohort scale.** The Phenopacket Store benchmark (§4.6) uses 1,500 patients across 100 OMIM diseases — a balanced subsample of the 8,343 filtered patients to keep all-vs-all retrieval tractable. The DP curve and the Resnik+BMA baseline would benefit from being re-run on the full filtered corpus; scaling experiments are out of scope for this submission.
 
-**Balanced cohort design.** Our cohort assigns exactly 5 patients per disease, creating uniform ground truth. Real databases have skewed disease distributions, with common conditions overrepresented and rare diseases potentially having single patients. Performance on extremely rare diseases (n=1 patients) cannot be assessed in our balanced design.
+**Curated case-report selection.** Phenopacket Store patients are extracted from peer-reviewed case reports and are consequently better-phenotyped than typical clinical records. EHR-derived cohorts (which we do not access in this work) would likely exhibit even greater within-disease heterogeneity and further widen the synthetic-to-real gap of §5.1.5.
 
-**Single-institution simulation.** We simulated queries within a single cohort rather than across federated institutions with heterogeneous annotation practices. Cross-institutional matching may face additional challenges from differing phenotyping conventions, HPO version mismatches, and variable annotation depth.
+**Single-institution simulation.** Queries run within a single corpus rather than across federated institutions with heterogeneous annotation practices. Cross-institutional matching faces additional challenges from differing phenotyping conventions, HPO version mismatches, and variable annotation depth.
 
-**Limited privacy attack evaluation.** While we measured membership and attribute inference resistance, more sophisticated attacks (e.g., model inversion, query-based reconstruction) merit further investigation. Adversarial capabilities evolve, and ongoing security assessment is essential.
+**Privacy-attack scope.** Our membership-inference experiment (§4.5.1) implements the Yeom-threshold and Shokri-shadow attacks; stronger attackers (label-only MI, gradient-leakage, query-based reconstruction) are not evaluated. The k-anonymity ablation considers a single-rare-term adversary; multi-term quasi-identifiers may permit residual leakage at the recommended k = 5–10.
 
 ### 5.4.2 Technical Limitations
 
@@ -184,16 +177,17 @@ These principles align with emerging frameworks for patient-centered genomics re
 
 ## 5.6 Summary
 
-Our evaluation demonstrates that privacy-preserving phenotype matching is technically feasible with acceptable utility costs. Phenotype similarity effectively identifies disease-sharing patients, IC-weighted metrics provide optimal performance, and layered privacy mechanisms offer configurable protection. Key findings include:
+Privacy-preserving phenotype matching is technically feasible, but the privacy-utility tradeoff is sharper on real patients than synthetic-cohort evaluations imply. We make four contributions:
 
-1. **Baseline retrieval is highly effective** (nDCG@10 > 99%), validating phenotype-based matching
-2. **Privacy mechanisms impose modest costs** (3.5–7% utility loss for practical configurations)
-3. **Mechanism composition provides defense in depth** against complementary threat vectors
-4. **Practical deployment is achievable** with appropriate parameter selection and governance
+1. **Empirically validated retrieval on real published patients.** Non-private Cosine-IC achieves MRR = 0.87 / nDCG@10 = 0.69 on 1,500 Phenopacket Store patients across 100 OMIM diseases, placing the system within the Phenomizer/LIRICAL band.
 
-Limitations include reliance on synthetic evaluation data, semi-honest security assumptions, and absence of clinical validation. Ethical deployment requires transparent communication, patient agency, and ongoing attention to equity implications.
+2. **Empirically measured privacy defense.** Shadow-model MI attack AUC collapses from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 cuts re-identification probability from 0.42 to 0.005. These numbers validate threat-model invariants I2 and I3 (§3.1.2).
 
-The path forward involves validation on real patient cohorts, extension to multi-omic data, and integration with existing rare disease infrastructure. Privacy-preserving computation offers a promising approach to the perennial challenge of enabling research collaboration while protecting patient confidentiality.
+3. **The synthetic-to-real privacy budget gap.** Per-score Laplace DP needs ε that is 20–50× larger on real cohorts than synthetic experiments suggest, because real similarity-score distributions are compressed. Rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response.
+
+4. **A revised deployment configuration** that respects the gap (§5.3.1): Cosine-IC similarity, RNM/Exponential mechanism preferred over Laplace, k ∈ [5, 10], 1% rare-term filtering.
+
+The most consequential open question for follow-up work is whether the rank-based DP mechanisms recovers utility on real cohorts at small ε — preliminary signs are favourable, but a full evaluation is left to future work.
 
 ---
 

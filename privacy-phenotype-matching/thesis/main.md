@@ -21,15 +21,13 @@ Stanford University School of Medicine
 
 ## Abstract
 
-Rare diseases affect approximately 300 million people worldwide, yet patients endure an average diagnostic odyssey of 4.8-7 years due to the scarcity of clinical expertise and fragmented medical knowledge. Federated patient matching—connecting individuals with similar phenotypic presentations across institutions—offers a promising avenue for accelerating diagnosis. However, sharing sensitive phenotype data raises significant privacy concerns, as rare phenotype combinations can serve as quasi-identifiers enabling patient re-identification.
+Rare diseases affect roughly 300 million people worldwide, and the diagnostic odyssey averages 4.8–7 years. Federated patient matching across institutions can accelerate diagnosis, but sharing phenotype data is risky: rare phenotype combinations act as quasi-identifiers. We present a privacy-preserving phenotype matching framework that composes Private Set Intersection (PSI) for cryptographic protection of phenotype sets, differential privacy (DP) for bounded score leakage, and k-anonymity with rare-term filtering for quasi-identifier defense. The system operates on GA4GH Phenopackets over the Human Phenotype Ontology and is compatible with Matchmaker Exchange and Beacon v2.
 
-We present a privacy-preserving phenotype matching framework that enables federated rare disease cohort discovery while protecting patient confidentiality. Our system integrates three complementary privacy mechanisms: Private Set Intersection (PSI) for secure phenotype overlap computation, differential privacy (DP) for quantifiable information leakage bounds, and k-anonymity for rare term filtering. The framework operates on GA4GH Phenopackets with Human Phenotype Ontology (HPO) terms, ensuring compatibility with established genomic data sharing standards.
+We formalize a two-party semi-honest threat model with three concrete adversary goals (membership inference, attribute inference, singling-out re-identification) and prove the corresponding privacy invariants for our composition. We evaluate the system on two cohorts: a synthetic cohort sampled from 12,974 OMIM/Orphanet disease profiles, and the Monarch Phenopacket Store (Danis et al., 2025) — 9,588 real published case-report phenopackets with confirmed OMIM diagnoses. On the real cohort, non-private IC-weighted cosine retrieval achieves MRR = 0.87 and nDCG@10 = 0.69, placing the system within the Phenomizer/LIRICAL band. Shadow-model membership-inference attack ROC AUC drops from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 reduces re-identification probability against the rare-term adversary from 0.42 to 0.005.
 
-We evaluate our approach using synthetic patients generated from 12,974 real disease profiles in the HPO annotation corpus, encompassing phenotype associations from OMIM and Orphanet. Baseline retrieval experiments achieve strong performance (nDCG@10 = 99.7%, MRR = 1.0) using information content-weighted Resnik similarity. We characterize privacy-utility tradeoffs across mechanism configurations and empirically measure privacy protection through membership and attribute inference attack simulations.
+The most consequential finding concerns deployment: the safe DP budget on real patients is 20–50× larger than synthetic-cohort experiments suggest, because real similarity-score distributions are compressed and per-score Laplace noise dominates them. Rank-based mechanisms (Report-Noisy-Max, Exponential) are the principled response. Our open-source implementation provides a reusable benchmark and a deployment configuration calibrated against the real-cohort findings.
 
-Our open-source implementation demonstrates that privacy-preserving phenotype matching is both technically feasible and practically useful, offering a path toward broader federated collaboration in rare disease research without compromising patient confidentiality.
-
-**Keywords:** rare diseases, phenotype matching, privacy-preserving computation, private set intersection, differential privacy, Human Phenotype Ontology, GA4GH Phenopackets
+**Keywords:** rare diseases, phenotype matching, differential privacy, private set intersection, k-anonymity, Human Phenotype Ontology, GA4GH Phenopackets, membership inference
 
 ---
 
@@ -64,10 +62,13 @@ This research was supported by [funding sources]. Computational resources were p
 - **Figure 3:** Privacy-preserving pipeline workflow
 - **Figure 4:** Similarity score distributions across metrics
 - **Figure 5:** Precision-Recall curves by similarity metric
-- **Figure 6:** nDCG@k vs. ε (differential privacy tradeoff)
+- **Figure 6:** nDCG@k vs. ε (synthetic-cohort differential privacy tradeoff)
 - **Figure 7:** Suppression rate vs. k (k-anonymity tradeoff)
-- **Figure 8:** Privacy-utility Pareto frontier
+- **Figure 8:** Privacy-utility Pareto frontier (synthetic cohort)
 - **Figure 9:** Membership inference attack ROC curves
+- **Figure 10:** Empirical MI attack AUC vs. ε (threshold and shadow-model attackers)
+- **Figure 11:** k-anonymity ablation: suppression and re-identification probability
+- **Figure 12:** Real-cohort retrieval (Phenopacket Store): privacy-utility curve and Phenomizer-style baseline
 
 ---
 
