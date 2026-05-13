@@ -6,21 +6,21 @@ The retrieval, attack, and rank-DP experiments of Chapter 4 jointly support a si
 
 ### 5.1.1 Effectiveness of Phenotype-Based Retrieval
 
-The synthetic-cohort baseline achieves nDCG@10 = 0.997 (Resnik, IC-weighted), validating the premise of phenotype-based matching: patients with the same disease consistently share enough HPO terms to be retrieved together. On the real published-cohort benchmark (§4.6), Cosine-IC achieves MRR = 0.87 and nDCG@10 = 0.69 — within the 0.7–0.9 MRR band reported by Phenomizer and LIRICAL on comparable tasks (Köhler et al., 2009; Robinson et al., 2020). The synthetic-cohort numbers reflect what is achievable when phenotype profiles match disease templates faithfully; the real-cohort numbers reflect the genuine noise of published clinical phenotyping (atypical presentations, incomplete documentation, and inter-curator variability).
+The synthetic-cohort baseline achieves nDCG@10 = 0.997 (Resnik, IC-weighted), validating the premise of phenotype-based matching: patients with the same disease consistently share enough HPO terms to be retrieved together. On the real published-cohort benchmark (§4.6), Cosine-IC achieves MRR = 0.87 and nDCG@10 = 0.69, within the 0.7–0.9 MRR band reported by Phenomizer and LIRICAL on comparable tasks (Köhler et al., 2009; Robinson et al., 2020). The synthetic-cohort numbers reflect what is achievable when phenotype profiles match disease templates faithfully; the real-cohort numbers reflect the genuine noise of published clinical phenotyping (atypical presentations, incomplete documentation, and inter-curator variability).
 
 The consistent advantage of IC-weighted metrics over unweighted alternatives confirms prior work (Köhler et al., 2009; Pesquita et al., 2009). More surprising is that Cosine-IC marginally outperforms full Resnik+BMA over the HPO DAG on the real cohort (MRR 0.87 vs. 0.83): when corpus-IC priors capture enough of the term-discrimination signal, ontology-traversal cost buys little additional accuracy. This argues for the simpler metric in deployment.
 
 ### 5.1.2 Sparsity and Its Implications
 
-Similarity-score distributions are sharply bimodal: median = 0, mean ≈ 0.01, with a heavy tail of high-similarity same-disease pairs. The result helps retrieval (true matches separate cleanly from background) and complicates privacy (the distinctive shape of a query's response — predominantly zero with a few high values — leaks information about the query patient's cohort size). The three privacy mechanisms address this jointly: DP noise smooths the response distribution, k-anonymity suppresses responses with too few non-zero entries, and rare-term filtering removes the quasi-identifiers that drive the heaviest tails before computation begins.
+Similarity-score distributions are sharply bimodal: median = 0, mean ≈ 0.01, with a heavy tail of high-similarity same-disease pairs. The result helps retrieval (true matches separate cleanly from background) and complicates privacy: the distinctive shape of a query's response, predominantly zero with a few high values, leaks information about the query patient's cohort size. The three privacy mechanisms address this jointly: DP noise smooths the response distribution, k-anonymity suppresses responses with too few non-zero entries, and rare-term filtering removes the quasi-identifiers that drive the heaviest tails before computation begins.
 
 ### 5.1.3 Privacy-Utility Tradeoffs
 
-The tradeoffs separate cleanly along three axes — the DP mechanism, the k-anonymity gate, and the rare-term filter — and each has a distinct cohort-dependence pattern.
+The tradeoffs separate cleanly along three axes (the DP mechanism, the k-anonymity gate, and the rare-term filter), and each has a distinct cohort-dependence pattern.
 
-**DP under Laplace** degrades gracefully on the synthetic cohort (2.1% nDCG loss at ε = 5, 10.5% at ε = 1) but catastrophically on the real cohort (98% nDCG loss at ε = 1, requiring ε ≥ 20 for 80% retention). The cohort sensitivity is not a property of DP itself — the (ε, 0)-DP guarantee is unchanged across cohorts; only the utility cost varies. §5.1.5 explains why and §4.7 measures the rank-utility fix.
+**DP under Laplace** degrades gracefully on the synthetic cohort (2.1% nDCG loss at ε = 5, 10.5% at ε = 1) but catastrophically on the real cohort (98% nDCG loss at ε = 1, requiring ε ≥ 20 for 80% retention). The cohort sensitivity is not a property of DP itself: the (ε, 0)-DP guarantee is unchanged across cohorts; only the utility cost varies. §5.1.5 explains why and §4.7 measures the rank-utility fix.
 
-**Membership-inference defence is independent of cohort and robust at deployable ε.** Table 13 shows shadow-model attack AUC collapsing from 0.98 (no DP) to 0.50 (random) at ε ≤ 1 — the regime where the DP guarantee is empirically meaningful against the strongest attacker we evaluate. The MI defence is real, quantifiable, and the same on both cohorts.
+**Membership-inference defence is independent of cohort and robust at deployable ε.** Table 13 shows shadow-model attack AUC collapsing from 0.98 (no DP) to 0.50 (random) at ε ≤ 1, the regime where the DP guarantee is empirically meaningful against the strongest attacker we evaluate. The MI defence is real, quantifiable, and the same on both cohorts.
 
 **k-anonymity is comparatively cheap.** Re-identification probability against the rare-term singling-out adversary falls three orders of magnitude (0.42 → 0.005) between k = 1 and k = 10, and every unique-patient query is blocked already at k = 2. Composing k-anonymity with moderate DP gives defence in depth without the utility collapse of low-ε per-score DP alone.
 
@@ -34,7 +34,7 @@ No single mechanism is sufficient. PSI protects against server-side phenotype en
 
 The most consequential finding of our real-cohort evaluation is that the safe DP budget is 20–50× larger on real published patients than synthetic-cohort experiments suggest. The mechanism is straightforward: synthetic patients are sampled from a single disease's phenotype profile with 75% recall and 10% noise, producing well-separated similarity-score distributions where same-disease pairs score in the 0.6–0.9 range and different-disease pairs near 0. Real patients exhibit substantial within-disease phenotypic heterogeneity, co-morbidities, and atypical presentations, compressing same-disease scores into the 0.2–0.5 range with substantial overlap against different-disease pairs. A Laplace noise scale of 1/ε that is dwarfed by a 0.6 same-disease score becomes comparable to a 0.3 one, collapsing the rank signal.
 
-This has two implications for the field. First, **published privacy-utility evaluations of rare-disease matching are systematically optimistic** to the extent they rely on disease-profile-sampled cohorts. Reviewers should expect deployment-time ε ≥ 10 with per-score Laplace even where synthetic-cohort experiments support ε ≤ 1. Second, **the principled fix is to replace the score utility with a rank utility under the exponential mechanism**. Results §4.7 evaluates this directly and confirms the claim empirically: rank-based exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace) and a usable MRR = 0.544 at ε = 1 (vs. 0.033 for Laplace), with the same ε-DP guarantee. Score-based exponential mechanism, by contrast, suffers the identical compression pathology as Laplace and offers no improvement — confirming that the mechanism *family* matters less than the *utility-function sensitivity-to-signal ratio*. Section 5.3.1 revises our deployment recommendation accordingly.
+This has two implications for the field. First, **published privacy-utility evaluations of rare-disease matching are systematically optimistic** to the extent they rely on disease-profile-sampled cohorts. Reviewers should expect deployment-time ε ≥ 10 with per-score Laplace even where synthetic-cohort experiments support ε ≤ 1. Second, **the principled fix is to replace the score utility with a rank utility under the exponential mechanism**. Results §4.7 evaluates this directly and confirms the claim empirically: rank-based exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace) and a usable MRR = 0.544 at ε = 1 (vs. 0.033 for Laplace), with the same ε-DP guarantee. Score-based exponential mechanism, by contrast, suffers the identical compression pathology as Laplace and offers no improvement, confirming that the mechanism *family* matters less than the *utility-function sensitivity-to-signal ratio*. Section 5.3.1 revises our deployment recommendation accordingly.
 
 ## 5.2 Comparison to Related Work
 
@@ -42,7 +42,7 @@ This has two implications for the field. First, **published privacy-utility eval
 
 **Matchmaker Exchange.** MME nodes currently exchange phenotype data in cleartext between participating institutions. Our framework is API-compatible with MME but interposes PSI on the wire, enabling matching by institutions whose data-sharing restrictions preclude cleartext exchange today.
 
-**Privacy-preserving genomics more broadly.** Prior work has emphasised variant-level protection (Ayday et al., 2013; Chen et al., 2019); phenotype privacy has received less attention despite the known re-identification potential of rare phenotype combinations (El Emam et al., 2011). Our rank-utility mechanism extends naturally to other tasks with compressed similarity-score distributions — for instance, RNA-seq outlier-based diagnosis (Frésard et al., 2019), where the protection target is multi-omic rather than purely phenotypic.
+**Privacy-preserving genomics more broadly.** Prior work has emphasised variant-level protection (Ayday et al., 2013; Chen et al., 2019); phenotype privacy has received less attention despite the known re-identification potential of rare phenotype combinations (El Emam et al., 2011). Our rank-utility mechanism extends naturally to other tasks with compressed similarity-score distributions, for instance RNA-seq outlier-based diagnosis (Frésard et al., 2019), where the protection target is multi-omic rather than purely phenotypic.
 
 ## 5.3 Practical Deployment Considerations
 
@@ -53,13 +53,13 @@ Our deployment recommendations differ from earlier drafts of this work because t
 | Parameter | Recommended Value | Rationale |
 |-----------|-------------------|-----------|
 | DP mechanism | **Iterative exponential mechanism, rank utility** (§4.7) | Noise tracks rank gaps (always O(n)) rather than compressed score magnitudes. 10× more budget-efficient than Laplace at matched ε-DP on real patients. |
-| ε (per query, rank-exp) | **2–5** | Retains 77–90% of non-private nDCG@10 on the Phenopacket Store cohort. At ε = 1, still delivers MRR = 0.544 — usable for triage if MI-defended privacy is the priority. |
+| ε (per query, rank-exp) | **2–5** | Retains 77–90% of non-private nDCG@10 on the Phenopacket Store cohort. At ε = 1, still delivers MRR = 0.544, usable for triage if MI-defended privacy is the priority. |
 | ε (per query, Laplace fallback) | ≥ 20 | If a rank-utility implementation is unavailable, Laplace per-score requires ε in this range for comparable retention. Not recommended for new deployments. |
 | k (anonymity) | 5–10 | Re-identification probability ≤ 0.05 at k = 10 against the rare-term singling-out adversary |
 | Rare-term threshold | 1% | Preserves ~98% utility while suppressing extreme outliers |
 | Similarity metric | Cosine-IC | Marginally outperforms Resnik+BMA on the real cohort at lower computational cost |
 
-The empirical MI defense (§4.5.1) is unchanged: the DP guarantee still bounds attack AUC, regardless of ε's utility cost. Institutions choosing Laplace at ε = 20 obtain the same theoretical (ε, 0)-DP guarantee they would obtain at ε = 1 — they simply accept a weaker formal bound in exchange for usable retrieval. Whether ε = 20 constitutes "meaningful" privacy is a deployment-level judgment that compositions across many queries (§3.4.4 accountant) make tighter than the per-query value suggests.
+The empirical MI defense (§4.5.1) is unchanged: the DP guarantee still bounds attack AUC, regardless of ε's utility cost. Institutions choosing Laplace at ε = 20 obtain the same theoretical (ε, 0)-DP guarantee they would obtain at ε = 1; they simply accept a weaker formal bound in exchange for usable retrieval. Whether ε = 20 constitutes "meaningful" privacy is a deployment-level judgment that compositions across many queries (§3.4.4 accountant) make tighter than the per-query value suggests.
 
 ### 5.3.2 Privacy Budget Management
 
@@ -102,7 +102,7 @@ We recommend institutional consultation with compliance officers, as specific re
 
 Our evaluation has several limitations that contextualize the results:
 
-**Real-cohort scale.** The Phenopacket Store benchmark (§4.6) uses 1,500 patients across 100 OMIM diseases — a balanced subsample of the 8,343 filtered patients to keep all-vs-all retrieval tractable. The DP curve and the Resnik+BMA baseline would benefit from being re-run on the full filtered corpus; scaling experiments are out of scope for this submission.
+**Real-cohort scale.** The Phenopacket Store benchmark (§4.6) uses 1,500 patients across 100 OMIM diseases, a balanced subsample of the 8,343 filtered patients to keep all-vs-all retrieval tractable. The DP curve and the Resnik+BMA baseline would benefit from being re-run on the full filtered corpus; scaling experiments are out of scope for this submission.
 
 **Curated case-report selection.** Phenopacket Store patients are extracted from peer-reviewed case reports and are consequently better-phenotyped than typical clinical records. EHR-derived cohorts (which we do not access in this work) would likely exhibit even greater within-disease heterogeneity and further widen the synthetic-to-real gap of §5.1.5.
 
@@ -134,7 +134,7 @@ Privacy-preserving computation reduces but does not eliminate identification ris
 
 **Patient agency.** Patients should be able to opt in or out at any time, with matching against their record disabled on withdrawal; receive optional notification when their record contributes to a successful match; and benefit from discoveries enabled by their data through equitable governance arrangements (Ramoni et al., 2017). The per-session privacy accountant we expose in the pilot (§3.8) is a foundation for the institutional-budget machinery these guarantees require.
 
-**Equitable adoption.** Complex privacy mechanisms deployed only at well-resourced institutions risk creating a two-tier system in which underrepresented populations contribute disproportionately less to the rare-disease cohort. Open-source release, low-friction reproducibility (`make reproduce`, §3.7), and turn-key cloud deployment (§3.8) lower the barrier; institutional matching networks should explicitly fund participation by lower-resource sites. Secondary use beyond matching — commercial profiling, surveillance — must be excluded by governance policy rather than technical controls alone.
+**Equitable adoption.** Complex privacy mechanisms deployed only at well-resourced institutions risk creating a two-tier system in which underrepresented populations contribute disproportionately less to the rare-disease cohort. Open-source release, low-friction reproducibility (`make reproduce`, §3.7), and turn-key cloud deployment (§3.8) lower the barrier; institutional matching networks should explicitly fund participation by lower-resource sites. Secondary use beyond matching (commercial profiling, surveillance) must be excluded by governance policy rather than technical controls alone.
 
 ## 5.6 Summary
 
@@ -144,7 +144,7 @@ Privacy-preserving phenotype matching is technically feasible, but the privacy-u
 
 2. **Empirically measured privacy defense.** Shadow-model MI attack AUC collapses from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 cuts re-identification probability from 0.42 to 0.005. These numbers validate threat-model invariants I2 and I3 (§3.1.2).
 
-3. **The synthetic-to-real privacy budget gap, and the rank-utility fix.** Per-score Laplace DP needs ε that is 20–50× larger on real cohorts than synthetic experiments suggest, because real similarity-score distributions are compressed. Replacing the score utility with a rank utility under the iterative exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace), with the same ε-DP guarantee — closing the gap empirically.
+3. **The synthetic-to-real privacy budget gap, and the rank-utility fix.** Per-score Laplace DP needs ε that is 20–50× larger on real cohorts than synthetic experiments suggest, because real similarity-score distributions are compressed. Replacing the score utility with a rank utility under the iterative exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 (vs. 13% for Laplace), with the same ε-DP guarantee, closing the gap empirically.
 
 4. **A revised deployment configuration** that operationalizes the fix (§5.3.1): Cosine-IC similarity, rank-utility exponential mechanism with ε ∈ [2, 5], k ∈ [5, 10], 1% rare-term filtering.
 

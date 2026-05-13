@@ -47,12 +47,12 @@ We do not assume a trusted third party. Multi-party extensions to $k \geq 3$ pee
 **Out-of-scope threats.** We make our boundaries explicit:
 
 - **Malicious adversaries** deviating from the protocol (e.g., crafting non-uniform blinding scalars, sending malformed curve points) are out of scope. Production deployment would require a malicious-secure PSI variant (Pinkas et al., 2018) or zero-knowledge proofs of correct execution; we discuss costs in §6.3.
-- **Side channels** — query timing, network traffic patterns, and CPU/cache leakage — are not addressed by the cryptographic analysis. We assume the transport is TLS-protected.
+- **Side channels** (query timing, network traffic patterns, CPU/cache leakage) are not addressed by the cryptographic analysis. We assume the transport is TLS-protected.
 - **Insider compromise** of the server's plaintext database, key material, or IC table is out of scope; standard institutional access controls are presumed.
 - **Cross-protocol linkage** by an adversary observing both query transcripts and an external rare-disease registry containing $D$'s patients (e.g., DECIPHER) may permit re-identification despite our protections. We quantify residual leakage empirically in §4 (membership-inference experiment) but do not claim cryptographic resistance.
 - **Repeated adaptive queries** by a single party are bounded by the privacy accountant (§3.4.4), but a coalition of colluding query parties can in principle multiply the budget; defense requires inter-institutional coordination of the budget and is out of scope here.
 
-This threat model — semi-honest, two-party, auxiliary-information-bearing, with disclosure analyzed at each protocol step — is the contract against which our privacy guarantees in the remainder of the chapter are proven and the privacy attacks in §4 are evaluated.
+This threat model (semi-honest, two-party, auxiliary-information-bearing, with per-step disclosure analysis) is the contract against which our privacy guarantees in the remainder of the chapter are proven and the privacy attacks in §4 are evaluated.
 
 ## 3.2 Data Representation
 
@@ -151,7 +151,7 @@ This formulation avoids ontology traversal during similarity computation while p
 
 ## 3.4 Privacy-Preserving Mechanisms
 
-This section specifies the three mechanisms named in §3.1.1 — PSI, DP, and k-anonymity — at the level of detail needed to verify the privacy invariants of §3.1.2. The literature contexts are in §2.4; here we fix protocol parameters, sensitivity bounds, and composition behaviour.
+This section specifies the three mechanisms named in §3.1.1 (PSI, DP, and k-anonymity) at the level of detail needed to verify the privacy invariants of §3.1.2. The literature contexts are in §2.4; here we fix protocol parameters, sensitivity bounds, and composition behaviour.
 
 ### 3.4.1 Private Set Intersection (PSI)
 
@@ -364,7 +364,7 @@ The complete implementation, evaluation scripts, and synthetic datasets are avai
 
 To demonstrate the framework's behavior interactively, we built a single-page web application (`app/streamlit_app.py`, Streamlit, ≈250 lines) that exposes the three-mechanism privacy composition to a clinician end user. The pilot loads a self-contained 1,500-patient cohort drawn from the Phenopacket Store (§3.6.3), accepts an HPO-term query, and applies the same rare-term filter, Laplace-DP score release, and k-anonymity gate as the batch evaluation pipeline. A per-session privacy accountant (§3.4.2) tracks cumulative ε across queries and is displayed in the sidebar; a "privacy trace" panel reveals which terms were rare-filtered and whether the gate suppressed the response, making the otherwise-invisible privacy machinery legible to the user.
 
-The pilot omits the cryptographic Private Set Intersection layer because PSI's contribution is invisible to a single-user demonstration — the released similarity scores carry the same DP and k-anonymity guarantees regardless of whether the underlying overlap computation was protected by PSI. A production federated deployment would route the score computation through the two-party PSI protocol of §3.4.1; the user-facing behavior of the pilot is unchanged.
+The pilot omits the cryptographic Private Set Intersection layer because PSI's contribution is invisible to a single-user demonstration: the released similarity scores carry the same DP and k-anonymity guarantees regardless of whether the underlying overlap computation was protected by PSI. A production federated deployment would route the score computation through the two-party PSI protocol of §3.4.1; the user-facing behavior of the pilot is unchanged.
 
 Figure 13 shows the running application. The system is deployed publicly at <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/> via Streamlit Community Cloud and links from the project repository.
 
