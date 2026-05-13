@@ -260,6 +260,15 @@ def build_overleaf_bundle(md_content: str, bundle_dir: Path) -> bool:
     # on Overleaf without further tweaking.
     body = body_tex.read_text()
     body_tex.unlink()
+
+    # Pandoc emits figures as plain `\begin{figure}` (default placement), which
+    # lets LaTeX float them forward past chapter boundaries. Pin every figure
+    # to its source position with [H] (from the float package) and add a hard
+    # page break before each top-level chapter so figures cannot leak into the
+    # next chapter's opening page.
+    body = body.replace(r"\begin{figure}" + "\n", r"\begin{figure}[H]" + "\n")
+    body = re.sub(r"(\\section\{(?:Results|Discussion|Future Work|Conclusion|Bibliography|Appendices)\})",
+                  r"\\clearpage" + "\n" + r"\1", body)
     main_tex = bundle_dir / "main.tex"
     main_tex.write_text(
         r"""\documentclass[12pt, letterpaper]{article}
@@ -280,6 +289,7 @@ def build_overleaf_bundle(md_content: str, bundle_dir: Path) -> bool:
 \usepackage{longtable}
 \usepackage{array}
 \usepackage{calc}
+\usepackage{float}  % enables [H] strict placement for figures
 \usepackage[hidelinks]{hyperref}
 \usepackage{natbib}
 \bibliographystyle{apalike}
