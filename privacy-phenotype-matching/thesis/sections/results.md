@@ -1,6 +1,6 @@
 # Results
 
-We evaluated our privacy-preserving phenotype matching framework using synthetic patient cohorts generated from real disease-phenotype associations in the HPO annotation corpus. This section presents our experimental findings across four domains: dataset characteristics, baseline retrieval performance, similarity score distributions, and privacy-utility tradeoff analysis.
+This chapter reports six experiments. Sections 4.1–4.4 evaluate retrieval and privacy-utility tradeoffs on a synthetic cohort sampled from the HPOA corpus. Section 4.5 measures empirical privacy via membership-inference and singling-out attacks against the mechanisms of §3.4. Section 4.6 evaluates retrieval on the Phenopacket Store real-patient cohort and exposes a 20–50× gap between synthetic and real DP budgets. Section 4.7 closes that gap with the rank-utility exponential mechanism.
 
 ## 4.1 Dataset Characteristics
 
@@ -85,15 +85,7 @@ Table 5 presents retrieval performance across metrics and evaluation cutoffs.
 
 *P@k = Precision at k; R@k = Recall at k; nDCG = normalized Discounted Cumulative Gain; Hit@k = Hit Rate at k; MRR = Mean Reciprocal Rank. Best values in bold.*
 
-All metrics achieve strong retrieval performance, with several notable findings:
-
-**Finding 1: Near-perfect top-1 precision.** All metrics achieve P@1 ≥ 0.996, indicating that for 99.6–100% of queries, the most similar patient shares the same underlying disease. The simplified Resnik metric achieves perfect P@1 = 1.000.
-
-**Finding 2: Complete recall by top-10.** All metrics achieve R@10 ≥ 0.999, meaning that nearly all relevant patients (those with the same disease) appear within the top 10 results. This confirms that phenotype-based similarity effectively identifies disease-sharing patients.
-
-**Finding 3: IC weighting improves ranking.** Comparing Cosine (IC-weighted) to Cosine (unweighted), IC weighting provides a small but consistent improvement across all metrics (nDCG@10: 0.996 vs. 0.995; MRR: 0.999 vs. 0.998). The simplified Resnik metric, which heavily weights rare phenotypes through IC, achieves the best overall performance.
-
-**Finding 4: Perfect hit rate.** All metrics achieve Hit@5 = 1.000, meaning every query retrieves at least one relevant patient in the top 5. This is critical for practical deployment, where users need confidence that relevant matches will surface in manageable result sets.
+All four metrics achieve near-saturated performance on the synthetic cohort: P@1 ≥ 0.996, R@10 ≥ 0.999, Hit@5 = 1.000 across all configurations. Simplified Resnik is best on every metric (P@1 = MRR = 1.000), confirming that IC weighting helps but the improvement is small because the synthetic cohort's clean disease-template sampling makes the task easy regardless of metric (this saturation is a feature of the cohort, not the system; §4.6 reports a markedly harder real-cohort regime where metric choice matters more). The 0.2–0.4% of queries that exhibit rank inversions involve patients with phenotypic overlap arising from phenotypically related diseases — a known limitation that the privacy mechanisms below do not introduce.
 
 ### 4.2.2 Precision-Recall Tradeoff
 
@@ -110,12 +102,6 @@ Figure 2 (not shown) plots precision versus recall at varying k values. The char
 | 50 | 0.080 | 1.000 |
 
 With 4 relevant patients per query, the theoretical maximum P@5 is 0.80 (achieved when all 4 relevant patients appear in the top 5, plus one irrelevant patient). Our observed P@5 = 0.793 approaches this bound, indicating that the top 5 results almost always consist of the 4 relevant patients plus at most one false positive.
-
-### 4.2.3 Mean Reciprocal Rank Analysis
-
-Mean Reciprocal Rank (MRR) measures the average position of the first relevant result. The simplified Resnik metric achieves MRR = 1.000, indicating that for every query, the top-ranked patient is relevant. This perfect MRR has practical significance: clinicians using the system would find a disease-sharing patient as their first result in every case.
-
-The small differences between metrics (MRR range: 0.998–1.000) reflect occasional rank inversions where a similar but non-disease-sharing patient appears first. These inversions are rare (0.2–0.4% of queries) and typically involve patients with substantial phenotypic overlap due to related or phenotypically similar diseases.
 
 ## 4.3 Similarity Score Distributions
 
@@ -231,23 +217,15 @@ We evaluated the composition of multiple privacy mechanisms—the configuration 
 | ε = 2.0 + k = 5 + filter (1%) | 0.928 | 0.942 | 0% |
 | ε = 1.0 + k = 5 + filter (1%) | 0.873 | 0.894 | 0% |
 
-The combined configuration with moderate privacy parameters (ε = 5.0, k = 5, 1% rare term filter) achieves nDCG@10 = 0.962—only 3.5% below the non-private baseline—while providing three complementary layers of protection:
-
-1. **Rare term filtering** removes quasi-identifying phenotypes before any computation
-2. **Differential privacy** bounds information leakage from result scores
-3. **K-anonymity** prevents inference about small cohorts
+The composed configuration with ε = 5.0, k = 5, and a 1% rare-term filter retains 96.5% of baseline nDCG@10. The synthetic-cohort utility cost of layered protection is therefore modest under Laplace DP — a conclusion that §4.6 will overturn for real patients.
 
 ### 4.4.5 Privacy-Utility Pareto Frontier
 
-Figure 3 (not shown) plots the privacy-utility Pareto frontier, identifying optimal configurations that maximize utility for a given privacy level. Key operating points include:
-
-- **High utility, moderate privacy**: ε = 5.0, k = 5, 1% filter → nDCG@10 = 0.962
-- **Balanced**: ε = 2.0, k = 5, 1% filter → nDCG@10 = 0.928
-- **High privacy, reduced utility**: ε = 1.0, k = 5, 2% filter → nDCG@10 = 0.851
+Figure 7 plots the privacy-utility Pareto frontier for the synthetic cohort. Three operating points span the practical range: ε = 5.0 / k = 5 / 1% filter retains 96% of nDCG@10; ε = 2.0 / k = 5 / 1% filter retains 93%; ε = 1.0 / k = 5 / 2% filter retains 85%. These numbers, generalised from synthetic data, motivated earlier published privacy-utility claims in this space; §4.6 reports the substantially harsher real-cohort behaviour that revises the recommendation.
 
 ## 4.5 Empirical Privacy: Adversarial Attack Evaluation
 
-The Pareto analysis above (§4.4) reports privacy parameters; it does not by itself demonstrate that those parameters thwart real adversaries. To close this gap we instantiate the two attacks described in the threat model (§3.1.2) and measure their empirical success against our system: a membership-inference attack on the DP score-release oracle (privacy invariant **I2**) and a singling-out attack against the k-anonymity gate (invariant **I3**).
+The §4.4 Pareto analysis reports privacy *parameters*; it does not show that those parameters defeat actual adversaries. We close this gap by instantiating the attacks from the threat model (§3.1.2) and measuring their success on our system: a membership-inference attack against the DP score-release oracle (testing invariant **I2**) and a singling-out attack against the k-anonymity gate (testing **I3**).
 
 ### 4.5.1 Membership-Inference Attack vs. Differential Privacy
 

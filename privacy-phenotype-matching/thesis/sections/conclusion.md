@@ -1,8 +1,6 @@
 # Conclusion
 
-Rare diseases collectively affect 300 million people worldwide, yet individual patients often wait years for diagnosis due to the scarcity of clinical expertise and fragmented medical knowledge. Federated patient matching—connecting individuals with similar phenotypic presentations across institutions—offers a promising path to accelerate diagnosis. However, the sensitive nature of phenotype data has limited adoption, as institutions hesitate to share patient information across organizational boundaries.
-
-This thesis demonstrates that privacy-preserving phenotype matching is both technically feasible and practically useful. We developed a modular framework integrating three complementary privacy mechanisms—Private Set Intersection, differential privacy, and k-anonymity—within a pipeline compatible with GA4GH Phenopackets, Beacon v2, and Matchmaker Exchange standards.
+This thesis closes the gap between the clinical value of federated rare-disease matching and the institutional barriers to phenotype sharing. The framework composes Private Set Intersection, differential privacy, and k-anonymity within a pipeline standards-compatible with GA4GH Phenopackets, Beacon v2, and Matchmaker Exchange; the central technical contribution is a measured fix — the rank-utility exponential mechanism — that recovers 90% of non-private retrieval utility at ε = 5 on real patients, where standard Laplace DP requires ε ≥ 50 for equivalent performance.
 
 ## Summary of Contributions
 
@@ -18,17 +16,11 @@ This thesis demonstrates that privacy-preserving phenotype matching is both tech
 
 ## Broader Impact
 
-This work contributes to the broader goal of enabling collaborative rare disease research while respecting patient privacy. By demonstrating that meaningful matching is achievable with quantifiable privacy guarantees, we hope to encourage participation by institutions currently excluded from federated networks due to data sharing concerns.
-
-The technical approach generalizes beyond phenotype matching. The composition of PSI, DP, and k-anonymity could apply to other biomedical matching problems—drug response similarity, clinical trial recruitment, and epidemiological surveillance—where sensitive data must be compared across institutional boundaries.
-
-More broadly, this thesis illustrates how privacy-enhancing technologies can expand the frontier of what is possible in biomedical research. Rather than treating privacy as an obstacle to be minimized, we approach it as a design constraint that, when satisfied, enables collaboration that would otherwise be impossible.
+The synthetic-to-real DP gap is not specific to phenotype matching. Any privacy-preserving retrieval task whose underlying signal is compressed — drug-response similarity for clinical-trial recruitment, gene-expression outlier matching for diagnosis, epidemiological-cluster discovery on coded encounter data — is vulnerable to the same Laplace pathology and benefits from the same rank-utility fix. The framing this thesis offers is therefore generalisable: in retrieval-style privacy problems, the utility function for the underlying DP mechanism is a more consequential design decision than the mechanism family.
 
 ## Closing Remarks
 
-The 300 million people living with rare diseases deserve the benefits of collaborative research. Privacy-preserving computation offers a path forward—protecting individual confidentiality while unlocking the collective knowledge distributed across institutions worldwide. This thesis represents one step on that path.
-
-Much work remains. Larger and more heterogeneous cohorts — including EHR-derived data, which would further stress the synthetic-to-real gap — would refine the privacy-utility curves. Multi-omic extension, malicious-secure cryptographic protocols, prospective clinical validation, and integration with clinical workflows are all essential next steps for translation to practice. We hope this work provides a foundation for these efforts and contributes to the ultimate goal: ending the diagnostic odyssey for rare disease patients everywhere.
+Rare-disease diagnosis is fundamentally a collective inference problem; the 300 million patients living with these conditions have been ill-served by privacy regimes that treat data-sharing prohibition as the default and individual-institutional compliance as the means. The contribution of this thesis is to demonstrate, with measured numbers on real published patients, that a quantifiably private alternative exists and is deployable today. Larger cohorts, EHR-derived data, multi-omic extension, malicious-secure cryptographic protocols, and prospective clinical validation remain — but the foundational privacy-utility question now has a defensible empirical answer.
 
 ---
 

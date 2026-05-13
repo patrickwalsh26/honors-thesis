@@ -1,6 +1,6 @@
 # Discussion
 
-This chapter interprets our experimental findings, situates them within the broader research landscape, addresses limitations, and considers the practical and ethical implications of privacy-preserving phenotype matching for rare disease research.
+The retrieval, attack, and rank-DP experiments of Chapter 4 jointly support a single deployment-level conclusion: privacy-preserving phenotype matching is technically feasible at ε-DP budgets that also defeat membership-inference attacks, provided the DP mechanism is calibrated to rank rather than score magnitude. Sections 5.1 interpret the supporting evidence in order. Section 5.2 contrasts the framework with prior federated systems; §5.3 gives concrete deployment recommendations; §5.4–5.5 catalogue limitations and ethical considerations.
 
 ## 5.1 Interpretation of Results
 
@@ -12,21 +12,19 @@ The consistent advantage of IC-weighted metrics over unweighted alternatives con
 
 ### 5.1.2 Sparsity and Its Implications
 
-The highly sparse similarity distribution (median = 0, mean ≈ 0.01) has important implications for both utility and privacy. Most patient pairs share no phenotypes, creating a bimodal distribution: zero similarity for unrelated patients, high similarity for disease-sharing patients.
-
-This sparsity is advantageous for retrieval—true matches stand out clearly from the background. However, it complicates privacy analysis. The distinctive pattern of query responses (predominantly zeros with a few high values) could itself be informative to an adversary. For example, observing that a query returns exactly 4 high-similarity matches might reveal that the query patient has a disease represented by exactly 5 patients in the database.
-
-Our privacy mechanisms address this concern through multiple layers. Differential privacy adds noise that obscures the precise number and scores of matches. K-anonymity suppresses results when cohort sizes are too small. Rare term filtering removes distinctive phenotypes before computation. Together, these mechanisms blur the sharp boundaries in the similarity distribution.
+Similarity-score distributions are sharply bimodal: median = 0, mean ≈ 0.01, with a heavy tail of high-similarity same-disease pairs. The result helps retrieval (true matches separate cleanly from background) and complicates privacy (the distinctive shape of a query's response — predominantly zero with a few high values — leaks information about the query patient's cohort size). The three privacy mechanisms address this jointly: DP noise smooths the response distribution, k-anonymity suppresses responses with too few non-zero entries, and rare-term filtering removes the quasi-identifiers that drive the heaviest tails before computation begins.
 
 ### 5.1.3 Privacy-Utility Tradeoffs
 
-The DP results depend critically on the evaluation cohort. On the synthetic cohort, utility degrades gracefully: at ε = 5.0, nDCG@10 falls only 2.1% from baseline; at ε = 1.0, the 10.5% loss is tolerable. On the real Phenopacket Store cohort, the same ε values are essentially unusable — ε = 1 retains only ~2% of baseline nDCG, and ε ≥ 20 is needed to retain 80% of baseline. §5.1.5 develops why this gap exists and what it implies.
+The tradeoffs separate cleanly along three axes — the DP mechanism, the k-anonymity gate, and the rare-term filter — and each has a distinct cohort-dependence pattern.
 
-The empirical membership-inference experiment (Table 13) shows that the DP guarantee delivers its claimed protection: shadow-model attack AUC drops from 0.98 (no DP) to 0.50 (random guessing) at ε ≤ 1. The MI defense is real and quantifiable. What changes between cohorts is the *utility cost* of that defense, not the privacy guarantee.
+**DP under Laplace** degrades gracefully on the synthetic cohort (2.1% nDCG loss at ε = 5, 10.5% at ε = 1) but catastrophically on the real cohort (98% nDCG loss at ε = 1, requiring ε ≥ 20 for 80% retention). The cohort sensitivity is not a property of DP itself — the (ε, 0)-DP guarantee is unchanged across cohorts; only the utility cost varies. §5.1.5 explains why and §4.7 measures the rank-utility fix.
 
-The k-anonymity ablation (Table 14) shows that suppression-based protection is comparatively cheap: re-identification probability against the rare-term singling-out adversary drops three orders of magnitude (0.42 → 0.005) between k = 1 and k = 10, with all unique-patient queries already blocked at k = 2. Composing k-anonymity with moderate DP (ε in the 10–20 range, given the real-cohort findings) provides defense in depth without the catastrophic utility collapse of low-ε DP alone.
+**Membership-inference defence is independent of cohort and robust at deployable ε.** Table 13 shows shadow-model attack AUC collapsing from 0.98 (no DP) to 0.50 (random) at ε ≤ 1 — the regime where the DP guarantee is empirically meaningful against the strongest attacker we evaluate. The MI defence is real, quantifiable, and the same on both cohorts.
 
-Rare-term filtering exhibits the sharpest internal tradeoff. A 1% prevalence threshold preserves 98% of utility while suppressing extreme outliers; a 10% threshold removes diagnostic terms and drops nDCG@10 to 0.847. Rare phenotypes are simultaneously the most identifying and the most diagnostic — filtering at the high-prevalence tail wastes the signal that makes phenotype matching valuable.
+**k-anonymity is comparatively cheap.** Re-identification probability against the rare-term singling-out adversary falls three orders of magnitude (0.42 → 0.005) between k = 1 and k = 10, and every unique-patient query is blocked already at k = 2. Composing k-anonymity with moderate DP gives defence in depth without the utility collapse of low-ε per-score DP alone.
+
+**Rare-term filtering exhibits the sharpest internal tradeoff.** A 1% prevalence threshold retains 98% of utility; a 10% threshold removes the diagnostic phenotypes that make matching work in the first place (nDCG@10 drops to 0.847). Rare phenotypes are simultaneously the most identifying and the most diagnostic; aggressive filtering wastes the signal we are trying to preserve.
 
 ### 5.1.4 Mechanism Composition
 
@@ -40,23 +38,11 @@ This has two implications for the field. First, **published privacy-utility eval
 
 ## 5.2 Comparison to Related Work
 
-### 5.2.1 Beacon Network
+**Beacons.** The Shringarpure–Bustamante (2015) Beacon attack exploits Boolean variant-presence responses; Raisaro et al. (2017) propose DP-Beacons but report substantial utility loss. Our framework operates at the phenotype level, which (i) admits ontology-driven generalisation that genomic positions do not, (ii) composes three mechanisms rather than relying on DP alone, and (iii) restricts the released transcript to similarity scores or top-$k$ identifiers rather than the per-variant Boolean signature that drives the Shringarpure–Bustamante attack.
 
-Our work addresses limitations identified in Beacon privacy research. Shringarpure and Bustamante (2015) showed that even Boolean Beacon responses enable re-identification. Raisaro et al. (2017) proposed DP-protected Beacons but noted substantial utility loss.
+**Matchmaker Exchange.** MME nodes currently exchange phenotype data in cleartext between participating institutions. Our framework is API-compatible with MME but interposes PSI on the wire, enabling matching by institutions whose data-sharing restrictions preclude cleartext exchange today.
 
-Our approach differs in several ways. First, we operate at the phenotype rather than variant level, where semantic structure (the HPO ontology) provides natural generalization options unavailable for genomic positions. Second, our multi-mechanism composition provides more flexible protection than DP alone. Third, our PSI-based computation reveals only similarity scores, not individual phenotype presence, limiting the attack surface.
-
-### 5.2.2 Matchmaker Exchange
-
-Our framework is designed for compatibility with MME infrastructure. The Phenopacket representation, HPO-based phenotyping, and similarity ranking align with existing MME semantics. Privacy mechanisms can be integrated at the query and response layers without modifying core matching logic.
-
-A key distinction is that current MME nodes share phenotype data in cleartext during matching. Our PSI-based approach enables similarity computation without revealing raw phenotypes, potentially enabling participation by institutions currently excluded due to data sharing restrictions.
-
-### 5.2.3 Privacy-Preserving Genomics
-
-Our work extends the privacy-preserving genomics literature (Ayday et al., 2013; Chen et al., 2019) to the phenotype domain. While much prior work focused on variant-level protection, phenotype privacy has received less attention despite phenotypes' potential for re-identification (El Emam et al., 2011).
-
-The Montgomery Lab's work on rare variant expression (GTEx Consortium et al., 2017; Frésard et al., 2019) demonstrates the value of molecular outlier analysis for diagnosis while highlighting the sensitivity of such data. Our framework could enable privacy-preserving queries against expression-derived phenotype profiles, extending protection to multi-omic matching scenarios.
+**Privacy-preserving genomics more broadly.** Prior work has emphasised variant-level protection (Ayday et al., 2013; Chen et al., 2019); phenotype privacy has received less attention despite the known re-identification potential of rare phenotype combinations (El Emam et al., 2011). Our rank-utility mechanism extends naturally to other tasks with compressed similarity-score distributions — for instance, RNA-seq outlier-based diagnosis (Frésard et al., 2019), where the protection target is multi-omic rather than purely phenotypic.
 
 ## 5.3 Practical Deployment Considerations
 

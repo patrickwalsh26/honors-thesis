@@ -1,80 +1,35 @@
 # Introduction
 
-## 1.1 The Rare Disease Diagnostic Challenge
+## 1.1 The Rare-Disease Diagnostic Odyssey
 
-Rare diseases, defined in the United States as conditions affecting fewer than 200,000 individuals, collectively represent one of the most significant challenges in modern medicine. Despite the low prevalence of any single rare disease, the cumulative burden is substantial: an estimated 300 million people worldwide—approximately 4% of the global population—live with one of more than 7,000 recognized rare diseases (Nguengang Wakap et al., 2020). In the United States alone, rare diseases affect 25-30 million individuals, making this patient population larger than those affected by heart disease or diabetes (NORD, 2023).
+Rare diseases — conditions affecting fewer than 200,000 individuals each in the United States — collectively reach 300 million patients worldwide across roughly 7,000 entities (Nguengang Wakap et al., 2020; NORD, 2023). The path to diagnosis is long: an average of 4.8–7 years, 7.3 physicians consulted, multiple misdiagnoses (EURORDIS, 2009; Global Genes, 2023). Eighty percent of cases are genetic (Ferreira, 2019); whole-exome and whole-genome sequencing now solve 25–40% of previously undiagnosed cases (Boycott et al., 2017), and RNA-sequencing adds an additional 7.5–17% on top of that yield (Frésard et al., 2019). The remaining undiagnosed majority — disproportionately patients with atypical or unique phenotypic constellations — is the population this thesis targets.
 
-The path to diagnosis for rare disease patients is notoriously prolonged and arduous. Studies consistently report an average diagnostic delay of 4.8 to 7 years, during which patients consult an average of 7.3 physicians and frequently receive multiple misdiagnoses (EURORDIS, 2009; Global Genes, 2023). This extended period of uncertainty—often termed the "diagnostic odyssey"—carries profound consequences: delayed or inappropriate treatments, psychological distress for patients and families, and substantial healthcare costs estimated at $5 million per undiagnosed patient over their lifetime (Spillmann et al., 2017).
+## 1.2 Federated Patient Matching
 
-The diagnostic challenge stems from multiple factors. Approximately 80% of rare diseases have a genetic basis (Ferreira, 2019), yet the genetic variants responsible remain unknown for many conditions. Clinical presentations are often heterogeneous, with the same genetic variant producing different phenotypes across patients, and conversely, similar phenotypes arising from distinct genetic etiologies. Furthermore, individual clinicians may encounter only a handful of cases throughout their careers, limiting the development of clinical expertise for any particular rare condition.
+A clinician confronting an undiagnosed patient with an unusual phenotype profile gains diagnostic power by locating other patients with similar profiles, particularly those already diagnosed. The Matchmaker Exchange network (Philippakis et al., 2015) operationalises this insight across seven major rare-disease databases, has facilitated over a hundred disease-gene discoveries since 2015, and is built on two enabling standards: the Human Phenotype Ontology for vocabulary (Köhler et al., 2021) and GA4GH Phenopackets for record exchange (Jacobsen et al., 2022). The clinical case for federated matching is settled. The privacy case is not.
 
-Recent advances in genomic technologies have transformed rare disease diagnosis. Whole-exome sequencing (WES) and whole-genome sequencing (WGS) now achieve diagnostic yields of 25-40% for previously undiagnosed patients (Boycott et al., 2017). Complementary approaches leveraging transcriptomics have further improved these rates, with RNA sequencing from accessible tissues identifying causal variants in an additional 7.5-17% of cases where DNA sequencing alone was uninformative (Frésard et al., 2019; Montgomery Lab, Stanford). The GREGoR (Genomics Research to Elucidate the Genetics of Rare Diseases) Consortium, a multi-center initiative studying thousands of challenging rare disease cases, exemplifies the power of integrating multiple molecular data types for diagnosis (GREGoR Consortium, 2025).
+## 1.3 The Privacy Bottleneck
 
-## 1.2 The Promise of Federated Patient Matching
+Phenotype data carries a privacy signature distinct from typical clinical records. Rare phenotype combinations function as quasi-identifiers — a patient with "Seizures," "Macrocephaly," and "Supernumerary nipple" may be uniquely identifiable in any database — and even Boolean variant-presence responses in GA4GH Beacons admit membership-inference attacks with around 5,000 queries (Shringarpure & Bustamante, 2015; El Emam et al., 2011). Institutional review boards consequently restrict cross-border data sharing, even where patients themselves would consent (Ramoni et al., 2017). The gap between the clinical value of federated matching and the institutional risk of phenotype exchange is the gap this thesis closes with rigorous, quantifiable privacy guarantees.
 
-A critical insight driving recent progress in rare disease research is that similar patients may share similar diagnoses. When a clinician encounters a patient with an unusual constellation of phenotypes, identifying other patients with matching clinical presentations—particularly those who have received a molecular diagnosis—can dramatically accelerate the diagnostic process. This principle underlies the concept of federated patient matching: connecting patients across institutions based on phenotypic and genotypic similarity.
+## 1.4 Three Privacy Primitives
 
-The Matchmaker Exchange (MME), established in 2015 under the auspices of the Global Alliance for Genomics and Health (GA4GH), represents the most successful implementation of this concept (Philippakis et al., 2015). MME provides a federated network connecting seven major rare disease databases—including GeneMatcher, PhenomeCentral, DECIPHER, and others—enabling clinicians to query across institutional boundaries for patients with matching clinical features. Since its inception, MME has facilitated thousands of successful matches, directly contributing to novel disease gene discoveries and patient diagnoses (Sobreira et al., 2015; Buske et al., 2015).
+Three established privacy-preserving computation techniques map naturally onto phenotype matching. **Private Set Intersection** (Meadows, 1986; Pinkas et al., 2018) computes shared phenotypes between two patients without revealing non-matching terms. **Differential privacy** (Dwork et al., 2006) adds calibrated noise so that the inclusion or exclusion of any single record is statistically undetectable in released outputs. **k-anonymity** (Sweeney, 2002) suppresses responses that would single out cohorts smaller than $k$ patients. No single primitive defends against every threat; their composition does. Chapter 3 makes this precise.
 
-The Human Phenotype Ontology (HPO) provides the standardized vocabulary that makes such matching possible (Köhler et al., 2021). With over 18,000 terms describing phenotypic abnormalities, HPO enables precise, computable representation of clinical features. The ontology's hierarchical structure—organized as a directed acyclic graph—supports both exact matching and semantic similarity computation, where related phenotypes can be recognized as similar even without identical terminology.
+## 1.5 Contributions
 
-The GA4GH Phenopacket standard further advances interoperability by defining a comprehensive schema for representing patient clinical data (Jacobsen et al., 2022). Phenopackets encapsulate not only phenotypic features but also diagnoses, genetic variants, and metadata in a structured, machine-readable format. These standards, developed through international collaboration, form the technical foundation for federated rare disease research.
+This thesis closes the clinical-utility / institutional-risk gap above with five contributions, ordered by novelty:
 
-## 1.3 Privacy Challenges in Genomic Data Sharing
+1. **A formal threat model with three composition-level privacy invariants.** A two-party semi-honest model with auxiliary information; three adversary goals (membership inference, attribute inference, singling-out re-identification); per-step disclosure analysis; and proofs that the composition of DH-PSI, Laplace/Gaussian/Exponential DP, and a k-anonymity gate satisfies (I1) PSI semantic security, (I2) $(\varepsilon, \delta)$-DP score release, and (I3) k-anonymity of result release (§3.1.2).
 
-Despite the clear clinical benefits of patient matching, sharing phenotype and genotype data across institutional boundaries raises significant privacy concerns. Medical data is among the most sensitive categories of personal information, protected by regulations including the Health Insurance Portability and Accountability Act (HIPAA) in the United States and the General Data Protection Regulation (GDPR) in Europe.
+2. **The synthetic-to-real DP gap and its measured fix.** We are aware of no prior work that benchmarks rare-disease privacy mechanisms on real published patients. Doing so reveals a 20–50× discrepancy in safe ε between synthetic and real cohorts, traced mechanically to compressed similarity-score distributions. The principled response — iterative exponential mechanism on a rank utility — recovers 90% of non-private nDCG@10 at ε = 5 versus 13% for Laplace under identical ε-DP guarantee, a 10× budget-efficiency advantage (§4.7).
 
-Phenotype data presents particular privacy risks that distinguish it from traditional medical records. Unlike laboratory values or vital signs, phenotypic features—especially rare combinations—can serve as quasi-identifiers that uniquely fingerprint individuals (El Emam et al., 2011). A patient with the combination of "Seizures," "Macrocephaly," and "Supernumerary nipple" may be the only such individual in a database, rendering them identifiable even without explicit identifiers. The GTEx Consortium's comprehensive analysis of genetic effects on gene expression across 44 human tissues demonstrated that individual genetic variation creates distinct molecular signatures (GTEx Consortium, 2017), further highlighting the identifiability risks inherent in detailed molecular characterization.
+3. **Empirically validated retrieval on real published patients.** Non-private IC-weighted cosine retrieval on 1,500 Phenopacket Store patients (Danis et al., 2025) achieves MRR = 0.87 and nDCG@10 = 0.69, placing the system within the Phenomizer/LIRICAL band (§4.6). A full Resnik+BMA Phenomizer-style baseline runs on the same corpus and is essentially tied with the simpler metric.
 
-The Beacon Network, another GA4GH initiative enabling queries about the presence of specific genetic variants, illustrates these risks concretely. Shringarpure and Bustamante (2015) demonstrated that even simple Boolean responses ("yes, this variant exists in our database") could enable re-identification attacks with as few as 5,000 queries. Subsequent work by Raisaro et al. (2017) introduced differential privacy protections for Beacon responses, but the fundamental tension between utility and privacy persists.
+4. **Empirical privacy measurement.** Yeom-threshold and Shokri-shadow membership-inference attacks against the DP score-release oracle reduce attack ROC AUC from 0.98 to 0.50 (random) at ε ≤ 1; a singling-out attack against the k-anonymity gate falls from 0.42 to 0.005 re-identification probability between k = 1 and k = 10 (§4.5).
 
-These concerns have tangible consequences for research. Institutional review boards and data governance committees often restrict data sharing to protect patient confidentiality, even when patients themselves might consent to broader use. The Undiagnosed Diseases Network (UDN) and similar initiatives have navigated these challenges through comprehensive consent frameworks, but such approaches require substantial administrative infrastructure and may not scale to global federation (Ramoni et al., 2017).
+5. **A reproducible, deployable artefact.** GA4GH-compatible open-source implementation with a Docker- and Make-driven reproduction pipeline (every figure regenerated in roughly four minutes from a clean checkout) and an interactive pilot system deployed at <https://honors-thesis-54tubqjkgwqjm4zyegglxw.streamlit.app/> (§3.8).
 
-The challenge, then, is to enable the benefits of federated patient matching while providing rigorous, quantifiable privacy protections. This thesis addresses that challenge.
+## 1.6 Organisation
 
-## 1.4 Privacy-Preserving Computation for Genomic Data
-
-The field of privacy-preserving computation offers a rich toolkit for protecting sensitive data while enabling useful analysis. Three complementary approaches are particularly relevant to phenotype matching:
-
-**Private Set Intersection (PSI)** enables two parties to compute the intersection of their sets—such as shared phenotypes between two patients—without revealing elements outside the intersection (Meadows, 1986). Modern PSI protocols based on elliptic curve cryptography achieve practical efficiency while providing strong security guarantees. Recent work has extended PSI to support cardinality computation (revealing only the size of the intersection) and threshold variants (revealing intersection only if it exceeds a minimum size) (Pinkas et al., 2018).
-
-**Differential privacy (DP)** provides a rigorous mathematical framework for quantifying privacy loss (Dwork et al., 2006). A differentially private mechanism guarantees that its outputs are statistically indistinguishable whether or not any single individual's data is included, with the privacy parameter ε controlling the strength of this guarantee. Differential privacy has been deployed at scale by organizations including the U.S. Census Bureau, Google, and Apple, demonstrating its practical viability (Abowd, 2018; Erlingsson et al., 2014).
-
-**K-anonymity** requires that each released record be indistinguishable from at least k-1 other records with respect to quasi-identifying attributes (Sweeney, 2002). While weaker than differential privacy in theoretical guarantees, k-anonymity provides intuitive protection and is well-suited to medical data where rare attribute combinations pose the greatest risk. In the phenotype domain, k-anonymity can be achieved through rare term filtering or generalization to parent ontology terms.
-
-Research at the intersection of privacy and genomics has explored applications of these techniques to specific problems. Montgomery and colleagues have developed approaches for identifying rare variants with large effects on gene expression while protecting individual privacy (GTEx Consortium et al., 2017). However, comprehensive frameworks for privacy-preserving phenotype matching—integrating multiple mechanisms and quantifying their combined utility and privacy implications—remain limited.
-
-## 1.5 Thesis Contributions
-
-This thesis presents a privacy-preserving phenotype matching framework that enables federated rare disease cohort discovery while protecting patient confidentiality. Our contributions are:
-
-1. **A formal threat model and modular privacy framework.** We specify a two-party semi-honest threat model with auxiliary information, three concrete adversary goals (membership inference, attribute inference, singling-out re-identification), and per-protocol-step disclosure analysis (§3.1.2). Against that model we design and implement a composable pipeline integrating Diffie-Hellman PSI, Laplace/Gaussian/Exponential differential privacy mechanisms, and k-anonymity with rare-term filtering, and prove three composition-level privacy invariants.
-
-2. **Empirically validated retrieval on real published patients.** Beyond synthetic-cohort experiments standard in the literature, we evaluate the system on 1,500 Phenopacket Store (Danis et al., 2025) patients drawn from published case reports with confirmed OMIM diagnoses, achieving MRR = 0.87 and nDCG@10 = 0.69 — within the Phenomizer/LIRICAL band. A full Resnik+BMA Phenomizer-style baseline runs on the same corpus for direct comparison.
-
-3. **Empirical privacy measurement.** We implement Yeom-threshold and Shokri-shadow membership-inference attacks against the DP score-release oracle and a singling-out attack against the k-anonymity gate, producing the privacy-utility Pareto curves used to validate the formal invariants. Shadow-model attack ROC AUC drops from 0.98 (no DP) to 0.50 (random) at ε ≤ 1; k-anonymity at k = 10 reduces re-identification probability against the rare-term adversary from 0.42 to 0.005.
-
-4. **The synthetic-to-real DP gap and a measured fix.** We document and explain a 20–50× discrepancy between safe ε on synthetic and real cohorts, propose the iterative exponential mechanism on rank utility as the principled response, and validate it: rank-utility exponential mechanism recovers 90% of non-private nDCG@10 at ε = 5 on the real cohort, versus 13% for Laplace at matched ε-DP — a 10× budget efficiency improvement. This finding has direct implications for published privacy-utility analyses that rely solely on disease-profile-sampled cohorts.
-
-5. **GA4GH standards compatibility.** The implementation natively supports GA4GH Phenopackets v2.0, Beacon v2 query semantics, and Matchmaker Exchange message formats, enabling integration with existing federated networks.
-
-6. **Open-source release.** Approximately 4,500 lines of Python under an open-source license, with reproducible evaluation pipelines for both synthetic and Phenopacket Store cohorts.
-
-## 1.6 Thesis Organization
-
-The remainder of this thesis is organized as follows:
-
-**Chapter 2: Literature Review** surveys related work across rare disease phenotyping, phenotype similarity metrics, patient matching systems, and privacy-preserving computation. We position our contributions within this landscape and identify gaps addressed by our work.
-
-**Chapter 3: Methods** presents our technical approach in detail, including data representation (Phenopackets, HPO), similarity metrics (Jaccard, Cosine, Resnik), privacy mechanisms (PSI, DP, k-anonymity), and evaluation methodology.
-
-**Chapter 4: Results** reports experimental findings on baseline retrieval performance, privacy-utility tradeoffs, and privacy attack simulations using our evaluation dataset derived from OMIM and Orphanet disease annotations.
-
-**Chapter 5: Discussion** interprets our results, discusses practical deployment considerations, addresses limitations, and considers ethical implications of privacy-preserving patient matching.
-
-**Chapter 6: Future Work** outlines extensions including malicious-secure protocols, homomorphic encryption, federated learning, and validation on real patient cohorts.
-
-**Chapter 7: Conclusion** summarizes contributions and broader impact.
-
----
-
+Chapter 2 surveys the relevant standards, similarity measures, federated systems, and privacy literature, naming four gaps the contributions above close. Chapter 3 specifies the threat model, data representation, similarity metrics, privacy mechanisms, and pilot system. Chapter 4 reports the synthetic- and real-cohort retrieval, attack, and rank-DP results. Chapter 5 interprets the findings — most notably the synthetic-to-real generalisation gap — and revises the deployment recommendation accordingly. Chapter 6 lists follow-on work; Chapter 7 concludes.

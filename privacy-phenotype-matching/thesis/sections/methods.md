@@ -4,11 +4,9 @@
 
 ### 3.1.1 Architecture
 
-We present a privacy-preserving phenotype matching framework that enables federated rare disease patient discovery while protecting sensitive clinical information. Our system integrates three complementary privacy mechanisms—Private Set Intersection (PSI), differential privacy (DP), and k-anonymity—within a modular architecture compatible with established genomic data sharing standards.
+Given a query phenopacket $Q$ with phenotype set $\Phi(Q)$ and a database $D = \{P_1, \ldots, P_n\}$ of phenopackets at a peer institution, the system returns the top-$k$ most similar patients in $D$ without revealing $\Phi(Q)$ in cleartext to the peer, the database phenotypes to the querying party, or any single-record identity to either side beyond what the formal guarantees of §3.1.2 permit. Patient records are encoded as GA4GH Phenopackets (Jacobsen et al., 2022); phenotypes are HPO terms (Köhler et al., 2021).
 
-The framework operates on patient records encoded as GA4GH Phenopackets (Jacobsen et al., 2022), with phenotypes represented using Human Phenotype Ontology (HPO) terms (Köhler et al., 2021). Given a query patient *Q* and a database of *n* patients *D = {P₁, P₂, ..., Pₙ}*, the system computes privacy-preserving similarity scores *s(Q, Pᵢ)* and returns the top-*k* most similar patients without revealing the precise phenotype overlap or non-matching terms.
-
-Figure 1 illustrates the system architecture. A query phenopacket first undergoes rare term filtering to remove quasi-identifying phenotypes. The filtered query then enters the PSI protocol, which computes set intersection cardinality without revealing individual terms. Differential privacy noise is added to similarity scores, and finally, k-anonymity checks suppress results from insufficiently sized cohorts.
+The pipeline (Figure 1) has four stages applied in order: (1) **rare-term filtering** suppresses quasi-identifying phenotypes from $Q$ before any cross-party communication; (2) **Private Set Intersection** computes phenotype overlap cardinalities without exposing non-matching terms; (3) **similarity scoring** combines those cardinalities with corpus-derived information content; (4) **differentially private release** of either scores or top-$k$ identifiers, gated by a **k-anonymity** check that suppresses small-cohort matches. Each stage is independently configurable, and the privacy guarantees compose modularly as proven in §3.1.2.
 
 ### 3.1.2 Threat Model
 
@@ -153,13 +151,11 @@ This formulation avoids ontology traversal during similarity computation while p
 
 ## 3.4 Privacy-Preserving Mechanisms
 
-Our framework implements three complementary privacy mechanisms that can be composed to provide layered protection. Each mechanism addresses distinct privacy concerns and offers configurable parameters to balance utility and protection.
+This section specifies the three mechanisms named in §3.1.1 — PSI, DP, and k-anonymity — at the level of detail needed to verify the privacy invariants of §3.1.2. The literature contexts are in §2.4; here we fix protocol parameters, sensitivity bounds, and composition behaviour.
 
 ### 3.4.1 Private Set Intersection (PSI)
 
-Private Set Intersection enables two parties to compute the intersection of their sets without revealing elements outside the intersection (Meadows, 1986). We implement Diffie-Hellman-based PSI using elliptic curve cryptography.
-
-**Protocol Description.** Let *Q* denote the query party with phenotype set *Φ(Q)* and *S* denote the server with database phenotypes. The protocol proceeds as follows:
+We instantiate Diffie–Hellman PSI on the NIST P-256 curve. Let $Q$ denote the query party with phenotype set $\Phi(Q)$ and $S$ denote the server with database $\Phi(S) = \bigcup_i \Phi(P_i)$. The protocol is:
 
 1. **Setup**: Both parties agree on elliptic curve parameters (NIST P-256/secp256r1) and a hash function *H: {0,1}* → G* mapping strings to curve points.
 
@@ -185,11 +181,7 @@ $$J = \frac{|Φ(Q) \cap Φ(S)|}{|Φ(Q)| + |Φ(S)| - |Φ(Q) \cap Φ(S)|}$$
 
 ### 3.4.2 Differential Privacy
 
-Differential privacy provides a rigorous mathematical framework for quantifying privacy loss (Dwork et al., 2006). A randomized mechanism *M* satisfies (ε, δ)-differential privacy if for all datasets *D₁*, *D₂* differing in one record and all output sets *S*:
-
-$$\Pr[M(D_1) \in S] \leq e^\varepsilon \cdot \Pr[M(D_2) \in S] + \delta$$
-
-The privacy parameter ε (epsilon) controls the privacy-utility tradeoff, with smaller ε providing stronger privacy but requiring more noise.
+Recall (§2.4.2) that a randomised mechanism $M$ is $(\varepsilon, \delta)$-DP if for all adjacent datasets $D_1, D_2$ and all measurable output sets $S$, $\Pr[M(D_1) \in S] \leq e^\varepsilon \cdot \Pr[M(D_2) \in S] + \delta$. We instantiate three mechanisms with sensitivity bounds calibrated to similarity-score release.
 
 **Laplace Mechanism.** For a numeric query *f* with sensitivity *Δf = max_{D₁,D₂} |f(D₁) - f(D₂)|*, the Laplace mechanism achieves (ε, 0)-DP by adding noise:
 
@@ -219,11 +211,11 @@ where *u(D, r)* is a utility function and *Δu* is its sensitivity.
 
 **Privacy Accounting.** When multiple queries are issued, privacy degrades according to composition theorems. We implement a privacy accountant that tracks cumulative ε expenditure and enforces budget limits.
 
-### 3.4.3 K-Anonymity and Rare Term Filtering
+### 3.4.3 k-Anonymity and Rare-Term Filtering
 
-K-anonymity requires that each record be indistinguishable from at least *k-1* other records with respect to quasi-identifying attributes (Sweeney, 2002). In phenotype matching, rare HPO term combinations can serve as quasi-identifiers that uniquely identify patients.
+The k-anonymity defence (Sweeney, 2002) attacks the singling-out goal of §3.1.2 via two complementary mechanisms: a *pre-computation* filter that removes rare quasi-identifying phenotypes from the query, and a *post-computation* gate that suppresses results from small candidate cohorts.
 
-**Rare Term Filtering.** We mitigate quasi-identifier risk by filtering phenotypes that appear infrequently in the reference corpus. For a prevalence threshold *τ* and corpus *C*:
+**Rare-term filtering.** For a prevalence threshold $\tau$ over reference corpus $C$:
 
 $$\Phi'(P) = \{t \in \Phi(P) : freq(t, C) \geq \tau\}$$
 
@@ -238,17 +230,9 @@ We implement two filtering strategies:
 
 $$R(Q) = \begin{cases} \text{top-}k \text{ results} & \text{if } |matches| \geq k \\ \varnothing & \text{otherwise} \end{cases}$$
 
-### 3.4.4 Composed Privacy Pipeline
+### 3.4.4 Composed Pipeline and Privacy Accounting
 
-Our framework composes the three mechanisms in a configurable pipeline:
-
-1. **Rare Term Filtering** (pre-processing): Remove or generalize quasi-identifying phenotypes
-2. **PSI Computation**: Securely compute phenotype overlap
-3. **Similarity Scoring**: Calculate similarity metrics from PSI output
-4. **DP Noise Addition**: Perturb similarity scores with calibrated noise
-5. **K-Anonymity Check**: Suppress results below cohort size threshold
-
-Each mechanism can be independently enabled or disabled via configuration. The privacy accountant tracks cumulative privacy loss across all mechanisms.
+The four pipeline stages of §3.1.1 are realised by the mechanisms above: rare-term filtering (§3.4.3), DH-PSI (§3.4.1), similarity scoring (§3.3), DP-protected release (§3.4.2), and k-anonymity gating (§3.4.3). A **privacy accountant** module tracks cumulative ε across queries by the same party, refusing further queries once the configured budget is exhausted. Basic composition yields $(q\varepsilon, 0)$-DP across $q$ queries; advanced composition (Kairouz et al., 2015) gives $(\varepsilon\sqrt{2q\ln(1/\delta')}, \delta')$-DP for any $\delta' > 0$ and is the default in the accountant.
 
 ## 3.5 Evaluation Framework
 
